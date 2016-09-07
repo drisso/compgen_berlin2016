@@ -1,0 +1,73 @@
+---
+title: "Computational Genomics Approaches in Precision Medicine"
+author: "Davide Risso"
+date: "August 25, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The arguments to be covered are:
+
+0. Intro
+    - About me (briefly)
+    - What is statistics and why it's important?
+    - Descriptive Statistics vs Inference
+    - Intro to example data (leukemia microarray)
+    
+1. Numerical and graphical summaries
+    - location, spread, range
+    - mean, variance
+    - quantiles and robustness
+    - density, histogram, boxplot
+    - two variables: correlation and scatterplot
+    
+Exercise: what if you have more than two variables?
+  - given a microarray dataset, find top 10 most variable genes and visualize their expression (hint: functions pairs(), heatmap())
+
+2. Intro to random variables and probability distributions
+    - why do we care: one catchy example with permutations (maybe from data8)
+    - continuous data: Gaussian
+    - binary data: binomial
+    - count data: Poisson
+    - CLT (with simulations in R)
+    
+Exercise: generate Poisson (lambda=10) and Binomial (size=10, prob=0.5) random samples and show that with enough samples the distribution can be approximated by a Gaussian. What happens when you change labmda? And when you change size and/or prob?
+
+4. Dimensionality reduction
+    - Principal component analysis
+
+5. Classification and cross-validation
+    - Definition of classification (examples?)
+    - LDA, k-NN, Naive Bayes
+    - Performance assessment: risk, error rate, ROC
+    - Training, testing, validation sets
+    - Cross-validation (compare cv risk and naive risk)
+
+Exercise: project the leukemia data onto first 2 PCs, implement 4-fold CV, compare LDA, k-NN, Naive Bayes estimators in terms of mean-squared-error
+
+6. Clustering
+    - Unsupervised classification (examples?)
+    - Hierarchical clustering
+    - k-means
+    - model-based clustering
+
+Exercise: cluster the leukemia dataset
+
+7a. Hypothesis testing
+    - compare two populations when we can measure everyone
+    - compare two populations when we only have a sample
+    - t-test
+    - permutations and/or bootstrap
+    - controlling for multiple testing
+    
+Exercise: compare two leukemia subgroups (t.test + p.adjust)
+
+OR
+
+7b. Reproducible research
+    - Why? (Karl Broman)
+    - How? (Rmarkdown + github)
+    
