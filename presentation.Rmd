@@ -13,7 +13,7 @@ bibliography: biblio.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache=TRUE, error=FALSE, echo=TRUE, results = "markup", fig.align = "center")
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache=TRUE, error=FALSE, echo=TRUE, results = "markup", fig.align = "center", tidy = FALSE)
 ```
 
 # Introduction
@@ -263,28 +263,689 @@ legend("topright", as.character(c(0.1, 0.5, 1, 2)), fill=c(6, 4, 2, 5))
 
 ## Boxplots
 
+- The _boxplot_, also called _box-and-whisker plot_, was proposed by Tukey (1977) as a simple graphical summary of the distribution of a variable.
+- The summary consists of the median, the upper and lower quartiles, the range, and possibly individual extreme values.
+
+## Boxplots
+
+```{r boxplot_anatomy, echo=FALSE}
+set.seed(123)
+ab <- boxplot(c(rnorm(100), -2.75, 2.5, 3.0), main = "Anatomy of a boxplot")
+arrows(x0 = .75, y0 = ab$out, x1 = .95, y1 = ab$out)
+text(x = .65, y = ab$out, labels = rep('outlier', length(ab$out)))
+arrows(x0 = .6, ab$stats, x1 = .75, ab$stats,col=c("magenta","cyan","cyan","cyan","magenta"))
+text(x = .55, y = ab$stats[1,], labels = "A",col="magenta")
+text(x = .55, y = ab$stats[5,], labels = "B",col="magenta")
+text(x = .55, y = ab$stats[2,], labels = expression(q[.25]),col="cyan")
+text(x = .55, y = ab$stats[3,], labels = expression(q[.5]),col="cyan")
+text(x = .55, y = ab$stats[4,], labels = expression(q[.75]),col="cyan")
+```
+
+\source{J. H. Bullard, K. D. Hansen, and M. Taub (Summer 2008). Statistics with R for Biologists: A Short Course.}
+
+## Boxplot
+
+- The line in the middle of the box represents the median, a robust measure of the center or location of the distribution.
+- The upper and lower sides of the box are the upper and lower quartiles, respectively.
+- The central box represents the inter-quartile range (IQR), a robust measure of the spread or scale of the distribution.
+- Extreme values, more than 1.5 IQR above the upper quartile and below the lower quartile, are typically plotted individually.
+
+## Boxplot
+
+```{r boxplot_zyx}
+boxplot(ZYX, xlab="ZYX", ylab="Expression measure",
+        col="red", main="Boxplot for Zyxin")
+```
+
+## Boxplot
+
+```{r boxplot_pheno}
+boxplot(ZYX~pheno, xlab="ZYX", ylab="Expression measure",
+        col=c("red", "blue"), main="Boxplot for Zyxin")
+```
+
+## Numerical summaries
+
+What if we want to _quantify_ the differences between the distributions?
+
+As an example, consider the following four sets of 10,000 numbers.
+
+```{r numerical, echo=FALSE}
+x3 <- data.frame(cbind(rnorm(10000,0,1),rnorm(10000,5,1),rnorm(10000,0,2),rchisq(10000,2)-2))
+plot(density(x3[,1]),col="red",lwd=3,xlim=c(-8,17),xlab="",main="Kernel density estimates for four distributions",sub="")
+for(j in (2:4))
+  lines(density(x3[,j]),col=j+1,lwd=3)
+```
+
 ## Location, spread, range
 
-## Mean and variance
+Consider a list of $n$ real numbers, $\{x_1, ..., x_n\}$.
 
-## Quantiles and robustness
+The _mean_  measures the _center_ or _location_ of a distribution,
+$$
+\bar{x} \equiv \frac{\mbox{sum of values}}{\mbox{number of values}} = \frac{\sum_{i=1}^n x_i}{n}.
+$$
+
+\bigskip
+
+The _standard deviation_ (SD) measures the _spread_ or _scale_ of a distribution.
+\begin{eqnarray*}
+s_x &\equiv& \sqrt{\mbox{mean of (deviations from the mean)$^2$}}\\
+&=& \sqrt{\frac{\sum_{i=1}^n (x_i - \bar{x})^2}{n}}.
+\end{eqnarray*}
+
+\bigskip
+
+The _variance_ is the square of the standard deviation.
+
+\bigskip
+
+For the Gaussian distribution, roughly 
+68\% of the observations are within one SD of the mean and 
+95\% within two SD.
+
+R functions: `mean`, `sd`, `var`.
+
+## Robust alternatives
+
+The _median_ is another measure describing the center of a distribution.
+
+It is more _robust_ than the mean, in the sense that it is less affected by extreme values, i.e., by observations in the tails of the distribution.
+
+\bigskip
+
+Similarly, robust measures of _spread_ are the _inter-quartile range_ (IQR),
+$$ IQR \equiv \mbox{upper quartile} - \mbox{lower quartile},$$
+and the _median absolute deviation_ (MAD),
+$$ MAD \equiv \mbox{median of $|$deviations from median$|$}.$$
+
+\bigskip
+
+R functions: `median`, `mad`, and `IQR`.
+
+## Robustness
+
+\small
+```{r robustness}
+x <- c(rnorm(100, mean=0, sd=1), 1000)
+mean(x)
+median(x)
+sd(x)
+mad(x)
+IQR(x)
+```
 
 ## Relation between two variables: correlation
 
+The _correlation coefficient_ is a measure of _linear association_. It is defined as the mean of the product of the observations in standard units,
+$$
+r= \text{Cor}[x,y]  \equiv \frac{1}{n} \sum_{i=1}^n \left(\frac{x_i - \bar{x}}{s_x}\right) \left(\frac{y_i - \bar{y}}{s_y} \right).
+$$
+
+\bigskip
+
+Correlation coefficients are always _between -1 and 1_. 
+
+A positive (negative) correlation means that the cloud of points in the scatterplot slopes up (down). 
+
+\bigskip
+
+The correlation coefficient is _without units_. 
+
+It is not affected by: adding a constant to all the values of one variable; multiplying all the values of one variable by a positive constant.
+
+\bigskip
+
+_Spearman's rank correlation coefficient_ is a robust measure of correlation, where ranks are used in place of the actual values of the $x$ and $y$ variables.
+
 ## Scatterplot
 
-## Displaying high-dimensional data
+\scriptsize
+
+```{r scatterplot}
+golub2 <- t(golub[c("X95735_at", "U41813_at"),])
+plot(golub2, main="Scatterplot of the expression of 2 genes",
+     pch=19, cex=1.5)
+```
 
 ## Smoothing
+
+When there are many points, scatterplots are not very informative because of _overplotting_.
+
+```{r scatter2}
+golub_samples <- golub[, 1:2]
+plot(golub_samples, xlab="Sample 1", ylab="Sample2",
+     main="Scatterplot of the gene expression of 2 samples")
+```
+
+## Smoothing
+
+One solution is _smoothing_.
+
+```{r scatter3}
+smoothScatter(golub_samples, xlab="Sample 1", ylab="Sample2",
+     main="Scatterplot of the gene expression of 2 samples")
+```
+
+## Smoothing
+
+Adding a trend with _lowess regression_ can reveal hidden patterns.
+
+```{r scatter4}
+smoothScatter(golub_samples, xlab="Sample 1", ylab="Sample2",
+     main="Scatterplot of the gene expression of 2 samples")
+lines(lowess(golub_samples), lwd=3, col=2)
+```
+
+## The importance of EDA
+
+Different numerical and graphical summaries highlight different aspects of the data.
+
+```{r correlation, echo=FALSE}
+library(MASS)
+par(mfrow=c(2, 2))
+x1 <- mvrnorm(100,c(0,0),matrix(c(1,0,0,1),2,2,byrow=TRUE))
+boxplot(data.frame(x1),
+main=paste("Cor[x,y]  = ",round(cor(x1[,1],x1[,2]),2), sep="")
+)
+x2 <- mvrnorm(100,c(0,0),matrix(c(1,0.99,0.99,1),2,2,byrow=TRUE))
+boxplot(data.frame(x2),
+main=paste("Cor[x,y]  = ",round(cor(x2[,1],x2[,2]),2), sep="")
+)
+plot(x1,xlab="x",ylab="y",
+main=paste("Cor[x,y]  = ",round(cor(x1[,1],x1[,2]),2), sep="")
+)
+plot(x2,xlab="x",ylab="y",
+main=paste("Cor[x,y]  = ",round(cor(x2[,1],x2[,2]),2), sep="")
+)
+par(mfrow=c(1, 1))
+```
+
+## The importance of EDA
+
+```{r correlation2, echo=FALSE}
+x <- rnorm(500)
+y <- -x^2 + rnorm(500,0.,0.5)
+plot(x,y,main=paste("Cor[x,y] = ", round(cor(x,y),2), sep=""))
+abline(lm(y~x)[[1]],col=2,lwd=2)
+lines(lowess(y ~ x,f=0.2),col=3,lwd=2)
+legend("bottom",c("Ordinary linear regression","Lowess regression"),col=2:3,lwd=2)
+```
+
+## Exercise: Displaying high-dimensional data
+
+_What if we have more than two variables?_
+
+\bigskip
+
+Given the `golub` dataset:
+
+1. Find the top 5 most variable genes (hint: function `rowVars` in the package `matrixStats`).
+2. Visualize their expression levels (hint: functions `pairs`, `heatmap.2`)
+
+## Solution: Displaying high-dimensional data
+
+\footnotesize
+```{r top5}
+library(matrixStats)
+vars <- rowVars(golub)
+names(vars) <- rownames(golub)
+vars <- sort(vars, decreasing = TRUE)
+golub5 <- golub[names(vars)[1:5],]
+```
+
+```{r visualize, eval=FALSE}
+heatmap(golub5)
+NMF::aheatmap(golub5, color = clusterExperiment::seqPal5,
+              annCol = data.frame(Class=pheno))
+pairs(t(golub5), pch=20, col=c(2, 4)[pheno])
+boxplot(t(golub5), las=2, ylab="Expression levels")
+
+cors <- cor(t(golub5))
+heatmap(cors, col=clusterExperiment::seqPal3)
+```
 
 # Random variables and probability distributions
 
 # Dimensionality reduction
 
+## Dimensionality reduction
+
+_Data_ consist of _variables recorded on observational units_.
+
+\bigskip
+
+The data for $J$ variables and $n$ observations can be represented as an $n \times J$ _data matrix_ $X = (X_{i,j}: i=1,\dotsc,n; j=1,\dotsc,J)$. 
+
+\bigskip
+
+In genomic settings, the number of variables $J$ is often in the tens of thousands and the sample size $n \ll J$.
+
+## Dimensionality reduction
+
+_Dimensionality reduction_, i.e., representing the data using _fewer than $J$ variables_, is useful for _summarizing_ and _visualizing_ data, in the context of exploratory data analysis (EDA, e.g., detecting main features), quality assessment/control (QA/QC, e.g., detecting artifacts, outliers), and reporting of results (e.g., clusters).
+
+\bigskip
+A variety of often related approaches can be used, but we focus on PCA.
+
+\bigskip
+_Principal component analysis_ (PCA) replaces the original variables by fewer _orthogonal linear combinations_ of these variables, with successively _maximal variance_ [@Mardiaetal79] (Chapter 8).
+
+## Principal Component Analysis
+
+_Principal component analysis_ (PCA) is a dimensionality reduction technique that provides a parsimonious summarization of the data by replacing the original variables by fewer _linear combinations_ of these variables, that are _orthogonal_ and have successively _maximal variance_.  
+
+\bigskip
+Such linear combinations seek to "separate out" the observations, while loosing as little information as possible.
+
+## Principal Component Analysis
+
+```{r pca_ex, echo=FALSE}
+x <- rnorm(100)
+y <- .5 * x + rnorm(100, sd=.5)
+xy <- cbind(x, y)
+
+xynorm <- scale(xy, scale = FALSE, center = TRUE)
+e <- eigen(cov(xynorm))
+
+plot(xynorm)
+lines(xynorm[,1], e$vectors[2,1]/e$vectors[1,1] * xynorm[,1], col=2, lwd=2)
+lines(xynorm[,1], e$vectors[2,2]/e$vectors[1,2] * xynorm[,1], col=4, lwd=2)
+legend("topleft", c("PC1", "PC2"), lty=1, col=c(2, 4), lwd=2)
+```
+
+## Principal Component Analysis
+
+```{r pca_ex2, echo=FALSE}
+pca <- prcomp(xynorm, center=FALSE)
+plot(pca$x)
+```
+
+## More formally
+
+Consider a $J$-dimensional random vector $X=(X_j: j=1,\dotsc,J) \in \RR^J$, with distribution $P$, mean vector $\mu = \EV[X]$, and covariance matrix $\Sigma = \Cov[X] = \EV[(X-\mu)(X-\mu)^{\top}]$. 
+
+\bigskip
+The _principal component transformation_ of the random vector $X$ is defined as the standardized linear combination 
+\begin{equation}
+X \rightarrow Y = \Gamma^{\top}(X - \mu),
+\end{equation}
+where, from the Spectral Decomposition Theorem, $\Gamma^{\top} \Sigma \Gamma = \Lambda$, 
+$\Lambda = \text{Diag}(\lambda_j: j=1,\dotsc,J)$ is the diagonal matrix of eigenvalues of $\Sigma$, ordered as $\lambda_1 \geq \lambda_2 \geq \dotsc \geq \lambda_J \geq 0$, and $\Gamma = (\gamma_j: j=1,\dotsc,J)$ is an orthogonal matrix whose columns $\gamma_j$ are the corresponding eigenvectors. 
+
+## More formally
+
+The _$j$th principal component_ ($j$th PC or $PC_j$) of $X$ is then
+\begin{equation}
+Y_j = \gamma_j^{\top}(X-\mu),
+\end{equation}
+where the $j$th eigenvector $\gamma_j$ is referred to as the _$j$th vector of principal component loadings_. 
+
+## PCA properties
+
+The principal components satisfy the following properties.
+
+1.
+$$
+\EV[Y] = 0_J,
+$$
+where $0_J$ is a $J$-dimensional column vector of zeroes.
+2.
+$$
+\Cov[Y] = \Lambda = \text{Diag}(\lambda_j: j=1,\dotsc,J)
+$$
+and, in particular,
+$$
+\text{Var}[Y_1] \geq \text{Var}[Y_2] \geq \dotsc \geq \text{Var}[Y_J].
+$$
+3.
+$$
+\sum_{j=1}^J \text{Var}[Y_j] = \tr \Sigma = \sum_{j=1}^J \lambda_j.
+$$
+4.
+$$
+\prod_{j=1}^J \text{Var}[Y_j] = |\Sigma| = \prod_{j=1}^J \lambda_j.
+$$
+
+## PCA properties
+
+The principal components are _not scale-invariant_!
+Depending on the types of variables under consideration, scaling or use of the correlation matrix instead of the covariance matrix may be in order.
+
+\bigskip
+The _proportion of total variation explained_ by the first $K$ principal components is given by
+\begin{equation}
+p_K = \frac{\sum_{j=1}^K \lambda_j}{\sum_{j=1}^J \lambda_j}.
+\end{equation}
+
+\bigskip
+The _scree plot_, i.e., a plot of $\lambda_j$ vs. $j$, can be used to determine how many components to use (stop at "elbow").
+
+## R software
+
+- `princomp` and `prcomp` can be used to compute the principal components.
+- `svd` can be used to obtain the singular value decomposition.
+- `eigen` to obtain the eigenvectors and eigenvalues.
+
+## Example
+
+```{r pca_golub}
+pca <- prcomp(t(golub))
+plot(pca$x, pch=19, col=c(2, 4)[pheno])
+legend("topleft", levels(pheno), fill=c(2, 4))
+```
+
+## Example
+
+```{r pca_golub2, echo=FALSE}
+plot(pca$sdev^2/sum(pca$sdev^2)*100, xlab="Number of PCs", ylab="Percent of variance explained", type='b', main="Percent of variance explained")
+```
+
 # Classification and cross-validation
+
+## Class prediction
+
+Consider a data structure $(X,Y) \sim P$, where $Y \in
+  \{1,\dotsc,K\}$ is a _scalar polychotomous outcome_ (a.k.a.,
+  dependent variable, response) and $X=(X_j: j=1, \dotsc, J) \in
+  \RR^J$ is a $J$-dimensional vector of _covariates_ (a.k.a.,
+  explanatory, feature, independent, or predictor variables).
+
+\bigskip
+The task is to _classify_ an observation, i.e.,
+_predict class_ $Y$, _given covariates_ $X$.
+
+\bigskip
+E.g. Predict tumor class or response to treatment $Y$, given
+  thousands of microarray or high-throughput sequencing measures of
+  gene expression $X$.
+
+\bigskip
+A _classification function_ or, in short, a _classifier_, is a
+  mapping, $\psi: {\cal X} \rightarrow \{1,\dotsc,K\}$, from a
+  $J$-dimensional covariate space ${\cal X} \subseteq \RR^J$ into the
+  integers $\{1, \dotsc, K\}$.
+
+## Class prediction
+
+A classifier generates a _partition of the covariate space_
+  ${\cal X}$ into $K$ disjoint and exhaustive subsets, ${\cal C}_1,
+  \dotsc, {\cal C}_K$, such that for an observation with covariates $X
+  \in {\cal C}_k$ the predicted class is $k$. 
+  That is,
+\begin{equation}
+\psi(X) = \sum_{k=1}^K k\, \Indic(X \in {\cal C}_k).
+\end{equation}
+
+\bigskip
+As regression, classification can be handled within the
+  framework of _loss-based inference_. That is, classifiers
+ (parameters and estimators thereof) can be defined in terms of a
+  _loss function_ $L((X,Y),\psi)$ and its associated _risk
+    function_
+\begin{equation}
+\Theta_L(\psi,P) \equiv \int L((x,y),\psi) dP(x,y).
+\end{equation} 
+
+## Class prediction
+
+A widely-used loss function is the _indicator_,
+\begin{eqnarray}
+  L((X,Y),\psi) &=& \Indic(Y \neq \psi(X))  \\
+  &=& \begin{cases}
+    1, & \text{if $Y \neq \psi(X)$ [incorrect classification]}\\
+    0, & \text{if $Y = \psi(X)$ [correct classification]}
+\end{cases}. \nonumber
+\end{eqnarray}
+The corresponding loss matrix $\mathbf{L}$ has diagonal elements equal to zero and off-diagonal elements equal to one. 
+The _risk_ function is the _misclassification probability_
+\begin{equation}
+\Theta_L(\psi,P) =  \EV[\Indic(Y \neq \psi(X))] = \Pr(Y \neq \psi(X)).
+\end{equation}
+
+\bigskip
+Note, that $L$ does not need to be symmetric, e.g., it can be more harmful to have false negatives than false positives (or vice versa).
+
+## Example of classifier partitions
+
+Simulate a learning set ${\cal L}_n = \{(X_i,Y_i): i=1,\dotsc,n
+  \}$ of $n=200$ independent and identically distributed (IID) $(X,Y)$
+  pairs, such that $Y \sim \distn{U}(\{1,\dotsc, K\})$ and $X|Y=k \sim
+  \distn{N}(\mu_k,\Sigma_k)$, $k=1,\dotsc,K$, with $K=3$ classes and
+  $J=2$ covariates.
+
+\bigskip
+The following figures compare the _partitions_ produced by different classifiers based on the learning set ${\cal L}_n$: _linear discriminant analysis_ (LDA), _quadratic discriminant analysis_ (QDA), _na\"ive Bayes_, _$k$-nearest-neighbor_ ($k$-NN), with $k=1,3,5$.
+
+## Example of classifier partitions
+
+```{r classifiers, include=FALSE}
+library(MASS)
+library(e1071)
+library(class)
+
+# Learning set 
+n <- 200
+x <- matrix(NA, n, 2)
+y <- sample(1:3, n, replace=TRUE)
+x[y==1,] <- mvrnorm(sum(y==1),c(1,0),0.5*diag(2))
+x[y==2,] <- mvrnorm(sum(y==2),c(0,2),diag(2))
+x[y==3,] <- mvrnorm(sum(y==3),c(0,0),rbind(c(0.5,0.25),c(0.25,0.5)))
+ls <- 1:nrow(x)
+
+# Partitions  
+N <-  200
+xx <- seq(-4, 4, length=N)
+y.lda <- y.qda <- y.nb <- y.knn1 <- y.knn3 <- y.knn5 <- y.knn9 <- y.rpart <- matrix(NA, N, N)
+
+for(i in 1:N)
+{
+  x.new <- data.frame(X1=xx[i],X2=xx)
+  dat <- data.frame(x,Y=factor(y))
+  dat <- rbind(dat,cbind(x.new,Y=rep(NA,length(xx))))
+
+  fit.lda <- lda(Y ~ . , data=dat,subset=ls)
+  y.lda[i,] <- predict(fit.lda,dat[-ls,])$class
+  
+  fit.qda <- qda(Y ~ . , data=dat,subset=ls)
+  y.qda[i,] <- predict(fit.qda,dat[-ls,])$class
+    
+  fit.nb <-naiveBayes(Y ~ ., data=dat, subset=ls,type="class")
+  y.nb[i,] <- predict(fit.nb,dat[-ls,])
+    
+  y.knn1[i,] <- knn(x,x.new,y,k=1)
+  y.knn3[i,] <- knn(x,x.new,y,k=3)
+  y.knn5[i,] <- knn(x,x.new,y,k=5)
+
+}
+
+#########################
+myPlotPartition <- function(x,y,xx,y.hat,col1=1,col2=heat.colors(12),pch=as.character(y))
+{
+  image(xx,xx,y.hat,col=col2,xlab=expression(X[1]),ylab=expression(X[2]))
+  points(x,pch=pch,col=col1[y])
+}
+
+```
+
+```{r sim, echo=FALSE}
+plot(x,xlab=expression(X[1]),ylab=expression(X[2]),col=y+1, pch=19, main="Simulated data")
+legend("topright",c("Y=1", "Y=2", "Y=3"),fill=2:4)
+```
+
+## Example of classifier partitions: LDA
+
+```{r lda, echo=FALSE}
+col1 <- c(rgb(0.5,0,0),rgb(0,0.5,0),rgb(0,0,0.5))
+col2 <- 2:4
+pch <- 16
+
+myPlotPartition(x,y,xx,y.lda,col1=col1,col2=col2,pch=pch)
+```
+
+## Example of classifier partitions: QDA
+
+```{r qda, echo=FALSE}
+myPlotPartition(x,y,xx,y.qda,col1=col1,col2=col2,pch=pch)
+```
+
+## Example of classifier partitions: NB
+
+```{r nb, echo=FALSE}
+myPlotPartition(x,y,xx,y.nb,col1=col1,col2=col2,pch=pch)
+```
+
+## Example of classifier partitions: k-NN (k=1)
+
+```{r knn1, echo=FALSE}
+myPlotPartition(x,y,xx,y.knn1,col1=col1,col2=col2,pch=pch)
+```
+
+## Example of classifier partitions: k-NN (k=3)
+
+```{r knn3, echo=FALSE}
+myPlotPartition(x,y,xx,y.knn3,col1=col1,col2=col2,pch=pch)
+```
+
+## Example of classifier partitions: k-NN (k=5)
+
+```{r knn5, echo=FALSE}
+myPlotPartition(x,y,xx,y.knn5,col1=col1,col2=col2,pch=pch)
+```
+
+## Class prediction vs. cluster analysis
+
+- _Classification. _Assign observational units to classes_ on the basis of
+variables characterizing/describing these observations.
+- _Cluster analysis._ The _classes are undefined_ a priori and need to be ``discovered'' from the data.
+    - a.k.a. Class discovery, unsupervised learning, unsupervised pattern recognition.
+- _Class prediction._ The _classes are predefined_ and the task is to understand the basis for the classification from a set of labeled observations, i.e., a learning set. This information is then used to _predict the class of future observations_.
+    - a.k.a. Classification, discriminant analysis, supervised learning, supervised pattern recognition.
+
+## General issues in class prediction
+
+- _Variable selection_. Filtering out uninteresting features.
+- _Standardization of observations and/or variables_ (cf.
+normalization).
+- _Distance measure._
+- _Loss function._
+- _Class representation._
+- _Imputation of missing data._
+- _Polychotomous classification._ For classifiers that can only handle binary outcomes.
+- _Confidence in prediction._
+
+## Performance assessment
+
+The _true risk_ is typically unknown, as it depends on the unknown population distribution.
+
+\bigskip
+The _empirical risk_, i.e., the risk estimated from the learning set is _biased_ and leads to _overfitting_.
+
+\bigskip
+The classifier should be _trained_ on the training set and tested on a different _test set_ of observations.
+
+\bigskip
+In the absence of a genuine test set, one can use _cross-validation_.
+
+## Performance assessment
+
+In order to provide accurate estimators of risk, it is essential to account for _all aspects_ of the classifier learning process, e.g., variable selection, selection of number of neighbors k and distance function for k-nearest-neighbor (k-NN) classifiers.
+
+## Overfitting
+
+```{r sim2, echo=FALSE}
+# Learning set 
+n <- 200
+x <- matrix(NA, n, 2)
+y <- sample(1:2, n, replace=TRUE)
+x[y==1,] <- mvrnorm(sum(y==1),c(1,0),0.5*diag(2))
+x[y==2,] <- mvrnorm(sum(y==2),c(0,2),diag(2))
+
+# Test set
+n <- 100
+xt <- matrix(NA, n, 2)
+yt <- sample(1:2, n, replace=TRUE)
+xt[yt==1,] <- mvrnorm(sum(yt==1),c(1,0),0.5*diag(2))
+xt[yt==2,] <- mvrnorm(sum(yt==2),c(0,2),diag(2))
+
+er1 <- sapply(1:10, function(i) {
+  pred1 <- knn(x, x, y, k=i)
+  sum(pred1 != y)/length(y)
+})
+
+er2 <- sapply(1:10, function(i) {
+  pred1 <- knn(x, xt, y, k=i)
+  sum(pred1 != yt)/length(yt)
+})
+
+ercv <- sapply(1:10, function(i) {
+  pred1 <- knn.cv(x, y, k=i)
+  sum(pred1 != y)/length(y)
+})
+
+plot(1:10, er1, type='b', ylim=c(0, .2), xlab="k", ylab="Misclassification rate", main="k-NN classifier performance")
+lines(1:10, er2, type='b', col=2)
+legend("topright", c("Training set error", "Test set error"), fill=1:2)
+```
+
+
+```{r include=FALSE, eval=FALSE}
+library(limma)
+
+## Make a new example with other data??
+
+# Train data
+data(Golub_Train)
+golub<-exprs(Golub_Train)
+golub[golub<100]<-100
+golub[golub>16000]<-16000
+golub <- log2(golub)
+golub <- normalizeQuantiles(golub)
+pheno<-pData(Golub_Train)$ALL.AML
+
+# Test data
+data(Golub_Test)
+golubt<-exprs(Golub_Test)
+golubt[golubt<100]<-100
+golubt[golubt>16000]<-16000
+golubt <- log2(golubt)
+golubt <- normalizeQuantiles(golubt)
+phenot <- pData(Golub_Test)$ALL.AML
+
+design <- model.matrix(~pheno)
+fit <- lmFit(golub, design)
+fit <- eBayes(fit)
+top <- topTable(fit, coef=2, n=Inf)
+
+de <- rownames(top)
+
+ngenes <- seq(2, 10, by=1)
+
+for(n in ngenes) {
+dat <- data.frame(pheno, t(golub[de[seq_len(n)],]))
+newdat <- data.frame(phenot, t(golubt[de[seq_len(n)],]))
+fit <- lda(pheno~., data=dat)
+pred_ls <- predict(fit, dat)
+pred_ts <- predict(fit, newdat)
+
+print(table(pred_ls$class, pheno))
+print(table(pred_ts$class, phenot))
+
+# print(sum(pred_ls$class != pheno)/length(pheno)*100)
+# print(sum(pred_ts$class != phenot)/length(phenot)*100)
+}
+
+```
 
 # Clustering
 
 # Hypothesis testing
 
 # Reproducible research
+
+## Additional resources
+
+- Data 8: Foundations of Data Science: data8.org
+- Karl Broman's tutorials: kbroman.org/pages/tutorials.html
+- R markdown and knitr tutorial: github.com/ijlyttle/user2016_knitr
+- The Element of Statistical Learning (book by Hastie, Tibshirani, Friedman): statweb.stanford.edu/~tibs/ElemStatLearn/
