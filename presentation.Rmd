@@ -1,0 +1,290 @@
+---
+title: "Intro to statistics for computational genomics"
+author: "Davide Risso"
+date: "September 14, 2016"
+output:
+  beamer_presentation:
+    toc: yes
+    fig_caption: false
+    includes:
+      in_header: header.tex
+    slide_level: 2
+bibliography: biblio.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache=TRUE, error=FALSE, echo=TRUE, results = "markup", fig.align = "center")
+```
+
+# Introduction
+
+## Acknowledgements
+
+Many of these slides are based or inspired by the material developed by Sandrine Dudoit for the course "Computational Statistics with Applications in Biology and Medicine" tought at UC Berkeley.
+
+## About me
+
+- I am a postdoc in the Division of Biostatistics, University of California, Berkeley
+- My research focuses on the development of statistical methods and software to address problems in biomedical and genomic applications.
+- I am author and maintainer of four R/Bioconductor packages
+
+## Why statistics?
+
+\begin{quote}
+\emph{I keep saying that the sexy job in the next 10 years will be statisticians, and I’m not kidding.}
+\end{quote}
+
+\source{Hal Varian, Chief Economist, Google (2009)}
+
+## Why statistics?
+
+\begin{quote}
+\emph{The coming century is surely the century of data}
+\end{quote}
+
+\begin{flushright}
+\scriptsize David Donoho (2000)
+\end{flushright}
+
+\begin{quote}
+\emph{Statistical thinking will one day be as necessary for efficient citizenship as the ability to read or write}
+\end{quote}
+
+\begin{flushright}
+\scriptsize Attributed to H. G. Wells by Darrell Huff (1954)
+\end{flushright}
+
+\begin{quote}
+\emph{Statistics is the grammar of science}
+\end{quote}
+
+\begin{flushright}
+\scriptsize Karl Pearson (1892)
+\end{flushright}
+
+## Why should \textit{I} learn statistics?
+
+\centering
+\includegraphics[width=.95\linewidth]{figures/extrapolating}
+
+\source{http://xkcd.com/605/}
+
+## Why should \textit{I} learn statistics?
+
+\centering
+\includegraphics[width=.95\linewidth]{figures/correlation}
+
+\source{http://xkcd.com/552/}
+
+## Why should \textit{I} learn statistics?
+
+\begin{quote}
+\emph{Those who ignore Statistics are condemned to reinvent it}
+\end{quote}
+
+\begin{flushright}
+\scriptsize Attributed to Bradley Efron by Jerome H. Friedman (2001)
+\end{flushright}
+
+\begin{quote}
+\emph{To call in the statistician after the experiment is done may be no more than asking him to perform a post-mortem examination: he may be able to say what the experiment died of.}
+\end{quote}
+
+\begin{flushright}
+\scriptsize R. A. Fisher (1938)
+\end{flushright}
+
+## Why should \textit{I} learn statistics?
+
+\begin{quote}
+\emph{Expression genetic data may not require a new breed of scientist, but they probably will require a new breed of collaboration. The focus of the computational biologist will need to change from the development of tools that answer specific questions to the development of general tools that enable biologists to carry out their own investigations---to explore, visualize and find biological signals in complex data.}
+\end{quote}
+
+\source{Karl W. Broman (2005 Nat Genet 37: 209-210)}
+
+## What is statistics?
+
+Many views...
+
+- We muddle through life making _choices based on incomplete information_. (Gonick and Smith, 1993).
+- What makes Statistics unique is its _ability to quantify uncertainty_, to make it precise. This allows statisticians to make categorical statements, with complete assurance — about their level of uncertainty. (Gonick and Smith, 1993).
+- Statistics is the _art of making numerical conjectures about puzzling questions_. (Freedman et al., 1978).
+- The objective of statistics is to make inferences (predictions, decisions) about a population based on information contained in a sample. (Mendenhall, 1987).
+
+## What is statistics?
+
+- \emph{Descriptive statistics:} Summarize the data to highlight *trends* and discover _hidden patterns_.
+- \emph{Inference:} make conclusions about a _population_ based on information contained in a _sample_.
+
+## An example dataset: ALL/AML microarray data
+
+Study of gene expression in two types of acute leukemias, acute lymphoblastic leukemia (ALL) and acute myeloid leukemia (AML) [@golub1999molecular].
+
+- Affymetrix high-density oligonucleotide chips (Hu6800 chip): 7,129 different probe-sets.
+- 47 cases of ALL (38 B-cell ALL and 9 T-cell ALL) and 25 cases of AML. Training set of 27 ALL and 11 AML.
+- R datasets: `Golub_Train`, `Golub_Test`, and `Golub_Merge` in the Bioconductor package `golubEsets`.
+- Data already pre-processed (image quantitation, normalization): measured on 16-bit scale, take log base 2.
+
+```{r install, eval=FALSE}
+source("https://bioconductor.org/biocLite.R")
+biocLite("golubEsets")
+```
+
+## An example dataset: ALL/AML microarray data
+
+\small
+```{r data_example}
+library(golubEsets)
+
+data(Golub_Train)
+golub<-exprs(Golub_Train)
+golub[golub<100]<-100
+golub[golub>16000]<-16000
+golub <- log2(golub)
+pheno<-pData(Golub_Train)$ALL.AML
+
+head(golub[,1:3])
+```
+
+# Numerical and graphical summaries
+
+## Definitions: Data and variables
+
+- The _data_ consist of one or more _variables_ measured/recorded on observational units in a _population_ or _sample_ of interest.
+- The term _variable_ refers to characteristics that differ among observational units.
+- E.g., expression of genes (variables) in patients (observational units)
+
+## Definitions: Data and variables
+
+_Quantitative/Numerical_ variables
+
+- _Continuous_ (real numbers): any value corresponding to the points in an interval (e.g., height, cholesterol level).
+- _Discrete_ (integers): countable number of values (e.g., T-cell counts).
+
+_Qualitative/Categorical_ variables
+
+- _Nominal_: names or labels, no natural order (e.g, sex, eye color).
+- _Ordinal_: ordered categories, no natural numerical scale (e.g., tumor grade).
+
+## Numerical and Graphical Summaries of Data
+
+The goal is to _provide numerical and graphical descriptions of data_ to
+
+- summarize the main features of the data;
+- uncover unusual features of the data;
+- reveal and summarize relationships between one or more variables and/or observational units.
+
+Useful for _exploratory data analysis_ (EDA) (cf. Tukey):
+
+- quality control
+- overall impressions
+- outlier detection
+- validity of the assumptions of candidate models
+
+and for _displaying and reporting the results_ of a statistical analysis.
+
+## Summarizing the data
+
+How can we get a sense of the values of the gene "IGF2" in this dataset?
+
+\tiny
+```{r summary}
+ZYX <- golub["X95735_at",]
+ZYX
+```
+
+## Histograms
+
+```{r histogram}
+hist(ZYX, col="red")
+```
+
+## Histograms
+
+A histogram consists of a set of blocks or bins, where the area of each block represents the percentage of observations in the corresponding class interval.
+
+\bigskip
+
+The unit of the vertical axis is percent per unit of the horizontal axis.
+
+\bigskip
+
+The choice of the number of bins (argument `breaks`) greatly affects the plot.
+
+## Histograms
+
+_Same data_ with different number of bins.
+
+```{r histogram2, echo=FALSE}
+par(mfrow=c(2,3))
+x1 <- c(rnorm(5000), rnorm(5000,4,2))
+B <- c(5,10,20,50,100)
+for(b in B)
+ hist(x1, probability=TRUE, breaks=b, main=paste("breaks=",b,sep=""))
+hist(x1[1:5000],probability=TRUE,xlim=range(x1),xlab="x1",main="",col="azure2")
+hist(x1[5001:10000],probability=TRUE,col="aquamarine4",add=TRUE)
+par(mfrow=c(1,1))
+```
+
+## Density plots
+
+Smoothed versions of histograms, using _kernel density estimators_.
+
+```{r density}
+plot(density(ZYX), main="Density plot of ZYX")
+```
+
+## Density plots
+
+Smoothed versions of histograms, using _kernel density estimators_.
+
+```{r density2}
+hist(ZYX, col="gray", probability=TRUE)
+lines(density(ZYX), lwd=2, col=2)
+```
+
+## Density plots
+
+- The choice of bandwidth is very important and can have a large impact on the density estimator.
+- The larger the bandwidth, the smoother the estimator.
+- This is an example of a bias-variance trade-off; as the
+bandwidth increases, variance decreases but bias increases.
+
+## Density plots
+
+```{r density3, echo=FALSE}
+hist(ZYX, col="gray", probability=TRUE, ylim=c(0, 0.4), main="Density plots: different bandwidths")
+lines(density(ZYX, bw=1), lwd=2, col=2)
+lines(density(ZYX, bw=2), lwd=2, col=5)
+lines(density(ZYX, bw=0.5), lwd=2, col=4)
+lines(density(ZYX, bw=0.1), lwd=2, col=6)
+legend("topright", as.character(c(0.1, 0.5, 1, 2)), fill=c(6, 4, 2, 5))
+```
+
+## Boxplots
+
+## Location, spread, range
+
+## Mean and variance
+
+## Quantiles and robustness
+
+## Relation between two variables: correlation
+
+## Scatterplot
+
+## Displaying high-dimensional data
+
+## Smoothing
+
+# Random variables and probability distributions
+
+# Dimensionality reduction
+
+# Classification and cross-validation
+
+# Clustering
+
+# Hypothesis testing
+
+# Reproducible research

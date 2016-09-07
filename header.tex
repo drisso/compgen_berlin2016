@@ -1,0 +1,102 @@
+\usetheme{default}
+\usepackage[english]{babel}
+\usepackage{amsmath}
+\usepackage[round]{natbib}
+\usepackage{url,verbatim}
+\usepackage[IT]{subfigure}
+\usepackage{pifont}
+\usepackage{ifthen}
+\usefonttheme[onlymath]{serif}
+
+\usepackage{/Library/Frameworks/R.framework/Versions/Current/Resources/share/texmf/tex/latex/Sweave}
+
+\setbeamercovered{transparent}
+
+\usepackage[headheight=22pt]{beamerthemeboxes}
+
+\usepackage{graphicx}
+\beamertemplatenavigationsymbolsempty
+\setbeamercovered{transparent}
+
+\useinnertheme{circles}
+
+\newcommand{\cip}{\mbox{$\perp\!\!\!\perp$}}
+\newcommand{\gmbox}[1]{$$#1$$}
+\newcommand{\dotsim}{\stackrel{\cdot}{\sim}}
+\newcommand{\interi}{{\rm Z}\negthinspace\negthinspace {\rm Z}}
+\newcommand{\reali}{{\rm I}\negthinspace {\rm R}}
+\newcommand{\naturali}{{\rm I}\negthinspace {\rm N}}
+\newcommand{\sign}{\mathop{\rm sgn}\nolimits}
+\newcommand{\Y}{\mathcal{Y}}
+ \newcommand{\E}{\mathrm{E}}
+
+\def\R{{\rm I\!R}}
+\def\P{{\rm Pr}}
+\def\Real{{\rm I\!R}}
+\def\T{{\footnotesize {^{_{\sf T}}}}}
+\def\tr{{\rm tr}}
+\def\diag{{\rm diag}}
+
+\definecolor{redve}{rgb}{0.604,0.008,0.00}
+\definecolor{berkeley}{rgb}{0, 0.196, 0.384}
+\definecolor{redtab}{rgb}{0.894,0.102,0.110}
+\definecolor{bluetab}{rgb}{0.216,0.494,0.722}
+\definecolor{greentab}{rgb}{0.302,0.490,0.29}
+\definecolor{blueb}{rgb}{0.2,0.2,0.7}
+\definecolor{bkgold}{cmyk}{0, .32, 1, 0}
+\definecolor{pu}{RGB}{152, 78, 163}
+\definecolor{orr}{RGB}{255, 127, 0}
+
+\newcommand{\red}[1]{\textcolor{redve}{#1}}
+\newcommand{\blue}[1]{\textcolor{blueb}{#1}}
+
+\newcommand{\redt}[1]{\textcolor{redtab}{#1}}
+\newcommand{\bluet}[1]{\textcolor{bluetab}{#1}}
+\newcommand{\greent}[1]{\textcolor{greentab}{#1}}
+\newcommand{\oranget}[1]{\textcolor{orr}{#1}}
+\newcommand{\purplet}[1]{\textcolor{pu}{#1}}
+\newcommand{\yellowt}[1]{\textcolor{bkgold}{#1}}
+
+\renewcommand{\emph}[1]{\textit{\textcolor{blueb}{#1}}}
+
+\newcommand{\software}[1]{\texttt{\textcolor{blueb}{#1}}}
+
+\newcommand{\source}[1]{\vfill
+  \begin{flushright}
+    {\scriptsize #1}
+  \end{flushright}
+}
+
+\setbeamertemplate{itemize item}{$\bullet$}
+% \setbeamertemplate{itemize subitem}{$\Longrightarrow$}
+\setbeamertemplate{sections/subsections in toc}[ball numbered]
+\setbeamercolor{section in toc}{fg=blueb, bg=white}
+\setbeamercolor{subsection in toc}{fg=black, bg=white}
+\setbeamercolor{frametitle}{fg=white, bg=berkeley}
+\setbeamercolor{title}{fg=white, bg=berkeley}
+\setbeamertemplate{frametitle continuation}{}
+\setbeamertemplate{footline}[frame number]
+
+\newcommand{\cmark}{\ding{51}}
+\newcommand{\xmark}{\ding{55}}
+
+\newcommand{\myurl}[1]{\textcolor{gray}{\url{#1}}}
+\newcommand{\myem}[1]{\textcolor{blueb}{#1}}
+\newcommand{\emphit}[1]{\textcolor{blueb}{\textit{#1}}}
+
+\newcommand{\RFun}[1]{{\texttt{#1}}}
+\newcommand{\RObj}[1]{{\texttt{#1}}}
+\newcommand{\RPack}[1]{{\textit{#1}}}
+\newcommand{\RCmd}[1]{{\texttt{#1}}}
+\newcommand{\Rfunarg}[1]{{\texttt{#1}}}
+\newcommand{\RClass}[1]{{\textit{#1}}}
+\newcommand{\Rcode}[1]{{\texttt{#1}}}
+
+\newcommand{\soft}[1]{\textsf{#1}}
+
+\renewcommand*{\thesubfigure}{}
+
+\author{Davide Risso}
+\institute{Division of Biostatistics, School of Public Health\\
+\smallskip
+University of California, Berkeley}
