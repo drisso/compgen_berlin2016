@@ -13,7 +13,7 @@ bibliography: biblio.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache=TRUE, error=FALSE, echo=TRUE, results = "markup", fig.align = "center", tidy = FALSE)
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache=TRUE, error=FALSE, echo=TRUE, results = "markup", fig.align = "center", tidy = FALSE, autodep = TRUE)
 ```
 
 # Introduction
@@ -195,8 +195,11 @@ ZYX
 
 ## Histograms
 
+\footnotesize
 ```{r histogram}
-hist(ZYX, col="red")
+library(RColorBrewer)
+colors <- brewer.pal(8, "Set2")
+hist(ZYX, col=colors[1])
 ```
 
 ## Histograms
@@ -221,8 +224,8 @@ x1 <- c(rnorm(5000), rnorm(5000,4,2))
 B <- c(5,10,20,50,100)
 for(b in B)
  hist(x1, probability=TRUE, breaks=b, main=paste("breaks=",b,sep=""))
-hist(x1[1:5000],probability=TRUE,xlim=range(x1),xlab="x1",main="",col="azure2")
-hist(x1[5001:10000],probability=TRUE,col="aquamarine4",add=TRUE)
+hist(x1[1:5000],probability=TRUE,xlim=range(x1),xlab="x1",main="",col=colors[1])
+hist(x1[5001:10000],probability=TRUE,col=colors[2],add=TRUE)
 par(mfrow=c(1,1))
 ```
 
@@ -240,7 +243,7 @@ Smoothed versions of histograms, using _kernel density estimators_.
 
 ```{r density2}
 hist(ZYX, col="gray", probability=TRUE)
-lines(density(ZYX), lwd=2, col=2)
+lines(density(ZYX), lwd=3, col=colors[2])
 ```
 
 ## Density plots
@@ -254,11 +257,11 @@ bandwidth increases, variance decreases but bias increases.
 
 ```{r density3, echo=FALSE}
 hist(ZYX, col="gray", probability=TRUE, ylim=c(0, 0.4), main="Density plots: different bandwidths")
-lines(density(ZYX, bw=1), lwd=2, col=2)
-lines(density(ZYX, bw=2), lwd=2, col=5)
-lines(density(ZYX, bw=0.5), lwd=2, col=4)
-lines(density(ZYX, bw=0.1), lwd=2, col=6)
-legend("topright", as.character(c(0.1, 0.5, 1, 2)), fill=c(6, 4, 2, 5))
+lines(density(ZYX, bw=1), lwd=3, col=colors[1])
+lines(density(ZYX, bw=2), lwd=3, col=colors[2])
+lines(density(ZYX, bw=0.5), lwd=3, col=colors[3])
+lines(density(ZYX, bw=0.1), lwd=3, col=colors[4])
+legend("topright", as.character(c(0.1, 0.5, 1, 2)), fill=colors)
 ```
 
 ## Boxplots
@@ -294,14 +297,14 @@ text(x = .55, y = ab$stats[4,], labels = expression(q[.75]),col="cyan")
 
 ```{r boxplot_zyx}
 boxplot(ZYX, xlab="ZYX", ylab="Expression measure",
-        col="red", main="Boxplot for Zyxin")
+        col=colors[1], main="Boxplot for Zyxin")
 ```
 
 ## Boxplot
 
 ```{r boxplot_pheno}
 boxplot(ZYX~pheno, xlab="ZYX", ylab="Expression measure",
-        col=c("red", "blue"), main="Boxplot for Zyxin")
+        col=colors[1:2], main="Boxplot for Zyxin")
 ```
 
 ## Numerical summaries
@@ -312,9 +315,9 @@ As an example, consider the following four sets of 10,000 numbers.
 
 ```{r numerical, echo=FALSE}
 x3 <- data.frame(cbind(rnorm(10000,0,1),rnorm(10000,5,1),rnorm(10000,0,2),rchisq(10000,2)-2))
-plot(density(x3[,1]),col="red",lwd=3,xlim=c(-8,17),xlab="",main="Kernel density estimates for four distributions",sub="")
+plot(density(x3[,1]),col=colors[1],lwd=3,xlim=c(-8,17),xlab="",main="Kernel density estimates for four distributions",sub="")
 for(j in (2:4))
-  lines(density(x3[,j]),col=j+1,lwd=3)
+  lines(density(x3[,j]),col=colors[j+1],lwd=3)
 ```
 
 ## Location, spread, range
@@ -498,7 +501,7 @@ golub5 <- golub[names(vars)[1:5],]
 heatmap(golub5)
 NMF::aheatmap(golub5, color = clusterExperiment::seqPal5,
               annCol = data.frame(Class=pheno))
-pairs(t(golub5), pch=20, col=c(2, 4)[pheno])
+pairs(t(golub5), pch=20, col=colors[pheno])
 boxplot(t(golub5), las=2, ylab="Expression levels")
 
 cors <- cor(t(golub5))
@@ -631,8 +634,8 @@ The _scree plot_, i.e., a plot of $\lambda_j$ vs. $j$, can be used to determine 
 
 ```{r pca_golub}
 pca <- prcomp(t(golub))
-plot(pca$x, pch=19, col=c(2, 4)[pheno])
-legend("topleft", levels(pheno), fill=c(2, 4))
+plot(pca$x, pch=19, col=colors[pheno])
+legend("topleft", levels(pheno), fill=colors)
 ```
 
 ## Example
@@ -666,6 +669,52 @@ A _classification function_ or, in short, a _classifier_, is a
   $J$-dimensional covariate space ${\cal X} \subseteq \RR^J$ into the
   integers $\{1, \dotsc, K\}$.
 
+## Toy example
+
+\framesubtitle{Training set}
+
+```{r toy, echo=FALSE}
+library(MASS)
+
+n <- 20
+x <- matrix(NA, n, 2)
+y <- sample(1:2, n, replace=TRUE)
+x[y==1,] <- mvrnorm(sum(y==1),c(1,3),0.5*diag(2))
+x[y==2,] <- mvrnorm(sum(y==2),c(-3,-2),0.5*diag(2))
+
+plot(x, pch=19, col=colors[y], xlab=expression(X[1]), ylab=expression(X[2]), cex=2, main="Training set")
+```
+
+## Toy example
+
+\framesubtitle{Classification rule}
+
+```{r toy2, echo=FALSE}
+plot(x, pch=19, col=colors[y], xlab=expression(X[1]), ylab=expression(X[2]), cex=2, main="Classification rule")
+abline(0, -1, lwd=3, lty=2)
+```
+
+## Toy example
+
+\framesubtitle{New observation}
+
+```{r toy3, echo=FALSE}
+plot(x, pch=19, col=colors[y], xlab=expression(X[1]), ylab=expression(X[2]), cex=2, main="New observation")
+abline(0, -1, lwd=3, lty=2)
+points(0, 2, pch=1, cex=2.2, lwd=2)
+```
+
+## Toy example
+
+\framesubtitle{Prediction}
+
+```{r toy4, echo=FALSE}
+plot(x, pch=19, col=colors[y], xlab=expression(X[1]), ylab=expression(X[2]), cex=2, main="Prediction")
+abline(0, -1, lwd=3, lty=2)
+points(0, 2, pch=1, cex=2.5, lwd=2)
+points(0, 2, pch=19, cex=2, col=colors[1])
+```
+
 ## Class prediction
 
 A classifier generates a _partition of the covariate space_
@@ -687,7 +736,7 @@ As regression, classification can be handled within the
 \Theta_L(\psi,P) \equiv \int L((x,y),\psi) dP(x,y).
 \end{equation} 
 
-## Class prediction
+## Loss function
 
 A widely-used loss function is the _indicator_,
 \begin{eqnarray}
@@ -769,15 +818,15 @@ myPlotPartition <- function(x,y,xx,y.hat,col1=1,col2=heat.colors(12),pch=as.char
 ```
 
 ```{r sim, echo=FALSE}
-plot(x,xlab=expression(X[1]),ylab=expression(X[2]),col=y+1, pch=19, main="Simulated data")
-legend("topright",c("Y=1", "Y=2", "Y=3"),fill=2:4)
+plot(x,xlab=expression(X[1]),ylab=expression(X[2]),col=colors[y], pch=19, main="Simulated data")
+legend("topright",c("Y=1", "Y=2", "Y=3"),fill=colors)
 ```
 
 ## Example of classifier partitions: LDA
 
 ```{r lda, echo=FALSE}
 col1 <- c(rgb(0.5,0,0),rgb(0,0.5,0),rgb(0,0,0.5))
-col2 <- 2:4
+col2 <- colors
 pch <- 16
 
 myPlotPartition(x,y,xx,y.lda,col1=col1,col2=col2,pch=pch)
@@ -815,7 +864,7 @@ myPlotPartition(x,y,xx,y.knn5,col1=col1,col2=col2,pch=pch)
 
 ## Class prediction vs. cluster analysis
 
-- _Classification. _Assign observational units to classes_ on the basis of
+- _Classification_. _Assign observational units to classes_ on the basis of
 variables characterizing/describing these observations.
 - _Cluster analysis._ The _classes are undefined_ a priori and need to be ``discovered'' from the data.
     - a.k.a. Class discovery, unsupervised learning, unsupervised pattern recognition.
@@ -851,7 +900,7 @@ In the absence of a genuine test set, one can use _cross-validation_.
 
 In order to provide accurate estimators of risk, it is essential to account for _all aspects_ of the classifier learning process, e.g., variable selection, selection of number of neighbors k and distance function for k-nearest-neighbor (k-NN) classifiers.
 
-## Overfitting
+## Training vs test error
 
 ```{r sim2, echo=FALSE}
 # Learning set 
@@ -888,6 +937,62 @@ lines(1:10, er2, type='b', col=2)
 legend("topright", c("Training set error", "Test set error"), fill=1:2)
 ```
 
+## Bayes rule and classification
+
+We are interested in the posterior probability
+$$
+P(Y=k|X) = \frac{P(Y=k) \, P(X|Y=k)}{\sum_{i=1}^K P(Y=i) \, P(X|Y=i)}
+$$
+
+\bigskip
+The _classification rule_ is to assign assign the observation to the population with the greatest posterior probability.
+
+\bigskip
+If we assume that the joint distribution of X is a multivariate normal, this gives rise to _Linear Discriminant Analysis_ (LDA) and _Quadratic Discriminant Analysis_ (QDA).
+
+\bigskip
+LDA assumes homogeneous variance across the populations, while QDA is the more general case of heterogeneous variances.
+
+## Quadratic Discriminant Analysis
+
+Let us assume
+$$
+P(X|Y=k) = \frac{1}{(2\pi)^{p/2}|\Sigma_k|^{1/2}}\exp{-\frac{1}{2} (X-\mu_k)^T \Sigma_k^{-1} (X-\mu_k)}.
+$$
+
+\bigskip
+Hence we need to minimize
+\begin{equation}
+\psi(X) = \argmin_k \ \left\{(X - \mu_k)^{\top} \Sigma_k^{-1} (X - \mu_k) + \log |\Sigma_k| - 2 \log p(k) \right\}.
+\end{equation}
+
+\bigskip
+The main quantity in the discriminant rule is $(X- \mu_k)^{\top} \Sigma_k^{-1} (X - \mu_k)$, the _squared Mahalanobis distance_ from the covariate vector $X$ to the class $k$ mean vector $\mu_k$.
+
+\bigskip
+Thus, intuitively, the predicted class for an observation with covariates $X$ is the  _class with closest mean vector_ $\mu_k$, for a suitably-defined distance function.
+
+
+## Linear Discriminant Analysis
+
+If we assume that $\Sigma_k = \Sigma$ for all $k$, we have LDA.
+
+The discriminant rule is based on the square of the Mahalanobis distance and is _linear in the covariates_ $X$,
+\begin{eqnarray}
+\psi(X) &=& \argmin_k\ (X - \mu_k)^{\top} \Sigma^{-1} (X - \mu_k)\\
+&=& \argmin_k\ -2\mu_k^{\top}\Sigma^{-1}X + \mu_k^{\top}\Sigma^{-1}\mu_k. \nonumber
+\end{eqnarray}
+
+## Special cases
+
+- _Diagonal Linear Discriminant Analysis_ (DLDA). If we assume a diagonal covariance matrix, $\Sigma_k = \Delta = \Diag(\sigma_1^2,\dotsc,\sigma_J^2)$,  a.k.a. _naive Bayes rule_ for Gaussian class conditional densities.
+- _Nearest Centroids_. If we assume that $\Sigma_k = I_J$, the $J \times J$ identity matrix. Observations are classified on the basis of their _Euclidean distances from class means_ $\mu_k$.
+
+## Limitations and extensions
+
+## Nearest-neighbor classifiers
+
+## Other classification algorithms
 
 ```{r include=FALSE, eval=FALSE}
 library(limma)
