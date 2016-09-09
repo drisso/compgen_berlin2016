@@ -644,7 +644,7 @@ legend("topleft", levels(pheno), fill=colors)
 plot(pca$sdev^2/sum(pca$sdev^2)*100, xlab="Number of PCs", ylab="Percent of variance explained", type='b', main="Percent of variance explained")
 ```
 
-# Classification and cross-validation
+# Classification
 
 ## Class prediction
 
@@ -962,9 +962,9 @@ $$
 
 \bigskip
 Hence we need to minimize
-\begin{equation}
+$$
 \psi(X) = \argmin_k \ \left\{(X - \mu_k)^{\top} \Sigma_k^{-1} (X - \mu_k) + \log |\Sigma_k| - 2 \log p(k) \right\}.
-\end{equation}
+$$
 
 \bigskip
 The main quantity in the discriminant rule is $(X- \mu_k)^{\top} \Sigma_k^{-1} (X - \mu_k)$, the _squared Mahalanobis distance_ from the covariate vector $X$ to the class $k$ mean vector $\mu_k$.
@@ -988,16 +988,43 @@ The discriminant rule is based on the square of the Mahalanobis distance and is 
 - _Diagonal Linear Discriminant Analysis_ (DLDA). If we assume a diagonal covariance matrix, $\Sigma_k = \Delta = \Diag(\sigma_1^2,\dotsc,\sigma_J^2)$,  a.k.a. _naive Bayes rule_ for Gaussian class conditional densities.
 - _Nearest Centroids_. If we assume that $\Sigma_k = I_J$, the $J \times J$ identity matrix. Observations are classified on the basis of their _Euclidean distances from class means_ $\mu_k$.
 
-## Limitations and extensions
+## Advantages of LDA and QDA
 
-## Nearest-neighbor classifiers
+LDA and QDA are
 
-## Other classification algorithms
+- _Simple and intuitive_: The predicted class of a new observation is the class with the closest mean (using the Mahalanobis metric).
+- _Optimal when the model is true_: LDA is based on the estimated Bayes rule for Gaussian class conditional densities and uniform priors.
+- _Easy to implement_: LDA has linear boundaries.
+- _Good performance in practice_: In spite of a possibly high bias, the low variance of the LDA estimators of class posterior probabilities often results in low classification error.
 
-```{r include=FALSE, eval=FALSE}
+## Limitations
+
+- Linear or even quadratic discriminant boundaries may not be flexible enough.
+- In the case of a high-dimensional covariate space, performance may degrade rapidly due to over-parameterization and high variance of estimators.
+
+## Extensions
+
+- _Flexible discriminant analysis_ (FDA). LDA on transformed outcomes and/or covariates.
+_ _Penalized discriminant analysis_ (PDA). A penalized Mahalanobis distance is used to enforce smoothness.
+- _Mixture discriminant analysis_ (MDA). Class conditional densities are modeled as mixtures of Gaussian densities.
+- _Automatic variable selection_. Shrinkage methods can be applied to perform automatic variable selection.
+
+See [@Ripley96] and [@HTF01].
+
+## R software
+
+- `lda`, `predict.lda` (`MASS`): Linear discriminant analysis.
+- `qda`, `predict.qda` (`MASS`): Quadratic discriminant analysis.
+- `naiveBayes` (`e1071`): Diagonal linear discriminant analysis, naive Bayes.
+
+Many arguments and values; consult help files for details and examples.
+
+## Exercise: A classifier for AML vs ALL
+
+\footnotesize
+
+```{r lda_ex}
 library(limma)
-
-## Make a new example with other data??
 
 # Train data
 data(Golub_Train)
@@ -1016,31 +1043,366 @@ golubt[golubt>16000]<-16000
 golubt <- log2(golubt)
 golubt <- normalizeQuantiles(golubt)
 phenot <- pData(Golub_Test)$ALL.AML
+```
 
-design <- model.matrix(~pheno)
-fit <- lmFit(golub, design)
-fit <- eBayes(fit)
-top <- topTable(fit, coef=2, n=Inf)
+## Exercise: A classifier for AML vs ALL
 
-de <- rownames(top)
+1. Find/Retrieve the most variable genes.
+2. Use the top 2, 4, ..., 20 genes to classify AML vs ALL samples with LDA.
+3. Evaluate the performance both in the training and in the test set.
+4. Plot the training and test set error as a function of the number of genes.
 
-ngenes <- seq(2, 10, by=1)
+## Solution: A classifier for AML vs ALL
 
-for(n in ngenes) {
-dat <- data.frame(pheno, t(golub[de[seq_len(n)],]))
-newdat <- data.frame(phenot, t(golubt[de[seq_len(n)],]))
+\footnotesize
+
+```{r lda_sol}
+vars <- rowVars(golub)
+names(vars) <- rownames(golub)
+vars <- sort(vars, decreasing = TRUE)
+
+ngenes <- seq(2, 20, by=2)
+er1 <- er2 <- numeric(length(ngenes))
+for(i in seq_along(ngenes)) {
+dat <- data.frame(pheno, t(golub[names(vars)[seq_len(ngenes[i])],]))
+newdat <- data.frame(phenot, t(golubt[names(vars)[seq_len(ngenes[i])],]))
 fit <- lda(pheno~., data=dat)
 pred_ls <- predict(fit, dat)
 pred_ts <- predict(fit, newdat)
 
-print(table(pred_ls$class, pheno))
-print(table(pred_ts$class, phenot))
+er1[i] <- sum(pred_ls$class != pheno)/length(pheno)
+er2[i] <- sum(pred_ts$class != phenot)/length(phenot)
+}
+```
 
-# print(sum(pred_ls$class != pheno)/length(pheno)*100)
-# print(sum(pred_ts$class != phenot)/length(phenot)*100)
+## Solution: A classifier for AML vs ALL
+
+\footnotesize
+```{r lda_plot}
+plot(ngenes, er1, type='b', ylab="Misclassification rate", 
+     main="LDA classifier performance", ylim=c(0, max(er2)),
+     xlab="Number of genes", lwd=3)
+lines(ngenes, er2, type='b', col=2, lwd=3)
+legend("topright", c("Training set error", "Test set error"), fill=1:2)
+```
+
+## Other classification algorithms
+
+One of the most active area of research in Statistics and Machine Learning.
+
+Some of the most used classifiers are:
+
+- Nearest-neighbor classifiers [@FixHodges51]
+- Support Vector Machines (SVM) [@Vapnik98]
+- Classification And Regression Trees (CART) [@Breimanetal84]
+- Neural Networks (cf. Deep Learning) [@Ripley96]
+
+\bigskip
+_Wikipedia has 79 pages in the category "Classification algorithms"_
+
+## Ensemble methods
+
+Substantial gains in accuracy can be obtained from _ensemble methods_, i.e., by _aggregating predictors_. 
+
+\bigskip
+For polychotomous outcomes, multiple predictors are aggregated by voting, for continuous outcomes, by averaging [@Dudoit03]. 
+
+\bigskip
+One can consider the _same predictor_ built _on perturbed versions of the learning set_, e.g., bootstrap samples, or a _linear combination of/vote from different predictors_.
+
+## Ensemble methods
+
+Examples include
+
+- _Bagging_: Aggregate same predictor built on multiple bootstrap samples of the learning set [@BreimanML96].
+- _Boosting_: Aggregate same predictor built from repeated adaptive resampling of the learning set, where sampling weights are increased for observations most often misclassified [@Friedmanetal00].
+- _Random forests_: Aggregate trees built on multiple bootstrap samples of the learning set, where covariates are randomly selected for consideration at each node [@BreimanRF01].
+- _Super Learner_: Linear combination of different predictors, where coefficients in the combination are selected by cross-validation [@vdLaanetal07].
+
+# Cross-validation
+
+## Cross-validation (CV)
+
+To assess the performance, one cannot use the same observations for both training and testing the classifier.
+
+\bigskip
+If one does not have a _genuine test or validation set_, she can  _partition the available learning set_ ${\cal X}_n = \{X_i: i=1,\dotsc,n\}$ into two sets: a _training set_ and a _validation_ set. 
+
+\bigskip
+Observations in the training set ${\cal T}_n$ are used to compute, or _train_, an estimator(s).
+
+\bigskip
+Observations in the validation set ${\cal V}_n$ are used to assess the risk of, or _validate_, this estimator(s). 
+
+\bigskip
+Note that CV can be applied in general estimation problems and is not limited to classification.
+
+## Leave-one-out cross-validation (LOOCV)
+
+In _leave-one-out cross-validation_ (LOOCV), each observation in the learning set is used in turn as the validation set and the remaining $(n-1)$ observations are used as the training set. 
+
+\bigskip
+The corresponding distribution of the split vector $V_n$ places probability $1/n$ on each of the $n$ binary vectors $v_n^i = (v_n^i(i^{\prime}) = \Indic(i^{\prime}=i) : i^{\prime}=1, \dotsc, n)$, $i=1,\dotsc,n$. 
+
+\bigskip
+The proportion of observations in the validation sets is constant, $\Upsilon_n=1/n$.
+
+## V-fold cross-validation
+
+Given a user-supplied fixed number of folds $V$, $V$-fold cross-validation randomly partitions the learning set into $V$ mutually exclusive and exhaustive sets of approximately equal size. 
+
+\bigskip
+Each set is used in turn as the validation set. 
+
+\bigskip
+Such a partition results in $V$ binary vectors, $v_n^v = (v_n^v(i): i=1, \dotsc, n)$,  $v=1,\dotsc, V$, such that $\sum_i v_n^v(i) \approxeq n/V$ $\forall \ v$ and $\sum_v v_n^v(i) = 1$ $\forall \ i$. 
+
+\bigskip
+The corresponding distribution of the split vector $V_n$ places probability $1/V$ on each of the $V$ binary vectors $v_n^v$.
+
+\bigskip
+The proportion of observations in the $V$ validation sets is $\Upsilon_n \approxeq 1/V$.
+
+## V-fold cross-validation
+
+\centering
+
+\includegraphics[angle=0,width=2.5in]{figures/CV1}
+
+Training and validation sets in five-fold cross-validation.
+
+## V-fold cross-validation
+
+\centering
+
+\includegraphics[angle=0,width=2.5in]{figures/CV2}
+
+Training and validation sets in five-fold cross-validation.
+
+## Example: Polynomial regression
+
+```{r regression, echo=FALSE}
+set.seed(99)
+N <- 100
+w <- sort(runif(N, -1.5, 1.5))
+y0 <- w*(w-1) * (w+1)  
+y <- y0 + rnorm(N, 0, 0.5)
+
+plot(y~w, main="True simulated data, with noise")
+lines(y0~w, col=2, lwd=3)
+```
+
+## Example: Polynomial regression
+
+How to select the degree of the regression function?
+
+```{r regression2, echo=FALSE}
+fit1 <- lm(y~w)
+fit2 <- lm(y~w+I(w^2))
+fit3 <- lm(y~w+I(w^2)+I(w^3))
+fit4 <- lm(y~w+I(w^2)+I(w^3)+I(w^4))
+
+plot(y~w, main="True simulated data, with noise")
+lines(w, predict(fit1), col=colors[1], lwd=3)
+lines(w, predict(fit2), col=colors[2], lwd=3)
+lines(w, predict(fit3), col=colors[3], lwd=3)
+lines(w, predict(fit4), col=colors[4], lwd=3)
+legend("topleft", paste0("degree ", 1:4), fill=colors)
+```
+
+## Example: Polynomial regression
+
+We want to minimize the _mean squared error_ between the prediction and the true values.
+
+```{r risk}
+risk <- function(pred, test) {
+  mean((pred - test$Y)^2, na.rm=TRUE)
+}
+```
+
+## Example: Polynomial regression
+
+\footnotesize
+
+```{r pred_lm}
+predLM <- function(degree, train, test) {
+  f <- c("Y ~ 1")
+  for(dd in 1:degree) f <- paste(f,paste("I(W^",dd,")",sep=""),sep="+")
+  fit <- lm(f, data=train)
+  pred <- predict(fit, test)
+  return(pred)
 }
 
+D <- 1:20
+train <- data.frame(Y=y, W=w)
+
+res <- lapply(D, function(d) predLM(d, train, train))
 ```
+
+## Example: Polynomial regression
+
+```{r pred_lm_plot, echo=FALSE}
+plot(y~w, main="True simulated data, with noise")
+lines(y0~w, col=2, lwd=3)
+dd <- c(1, 3, 5, 10, 20)
+for(i in seq_along(dd)) {
+  lines(w, res[[dd[i]]], col=colors[i], lwd=3)
+}
+```
+
+## Example: Polynomial regression
+
+```{r pred_lm_plot2, echo=FALSE}
+plot(D, sapply(res, risk, train), type='b', lwd=3, xlab="Degree", ylab="Mean squared error")
+```
+
+The problem is that if we train and test on the same data, we incur in _overfitting_.
+
+Hence, we cannot use this as a criterion to choose the polynomial degree.
+
+## Example: 5-fold cross-validation
+
+\footnotesize
+
+```{r pred_lm_cv}
+V <- 5
+n <- floor(N/V)
+fold <- sample(as.vector(mapply(rep, 1:V, n)))
+
+cvres <- sapply(seq_len(V), function(v) {
+  testSet <- data.frame(W=w[which(fold==v)], Y=y[which(fold==v)])
+  trainSet <- data.frame(W=w[which(fold!=v)], Y=y[which(fold!=v)])
+
+  lmRisk <- sapply(D, function(d) {
+    pred <- predLM(d, trainSet, testSet)
+    risk(pred, testSet)
+  })
+
+  return(lmRisk)
+})
+
+cvRiskLM <- rowMeans(cvres)
+```
+
+## Example: LOO cross-validation
+
+\footnotesize
+
+```{r pred_lm_loo}
+loores <- sapply(seq_len(N), function(v) {
+  testSet <- data.frame(W=w[v], Y=y[v])
+  trainSet <- data.frame(W=w[-v], Y=y[-v])
+
+  lmRisk <- sapply(D, function(d) {
+    pred <- predLM(d, trainSet, testSet)
+    risk(pred, testSet)
+  })
+
+  return(lmRisk)
+})
+
+looRiskLM <- rowMeans(loores)
+```
+
+## Example: Polynomial regression
+
+```{r pred_lm_plot3, echo=FALSE}
+plot(D, sapply(res, risk, train), type='b', lwd=3, xlab="Degree", ylab="Mean squared error")
+lines(D, cvRiskLM, type='b', lwd=3, col=2)
+lines(D, looRiskLM, type='b', col=4, lwd=3)
+legend("center", c("Naive", "5-fold", "LOO"), fill=c(1, 2, 4))
+```
+
+## Example: Polynomial regression
+
+```{r pred_lm_which}
+which.min(cvRiskLM)
+which.min(looRiskLM)
+```
+
+## Exercise: compute the CV error for AML vs ALL
+
+1. Find/Retrieve the most variable genes.
+2. Use the top 2, 4, ..., 20 genes to classify AML vs ALL samples
+with LDA.
+3. Evaluate the performance using a 5-fold CV and LOO CV procedure on the _training set only_.
+4. Plot the 5-fold CV and LOO CV error as a function of the number
+of genes alongside the test-set error rate.
+
+_Comment on the relative advantages of each procedure_
+
+## Solution: compute the CV error for AML vs ALL
+
+\tiny
+
+```{r golub_cv}
+V <- 5
+N <- NCOL(golub)
+n <- floor(N/V)
+fold <- sample(as.vector(mapply(rep, 1:V, n)))
+
+cver <- looer <- numeric(length(ngenes))
+for(i in seq_along(ngenes)) {
+  cver[i] <- mean(sapply(seq_len(V), function(v) {
+    testSet <- data.frame(pheno=pheno[which(fold==v)],
+                          t(golub[names(vars)[seq_len(ngenes[i])], 
+                                  which(fold==v)]))
+    trainSet <- data.frame(pheno=pheno[which(fold!=v)],
+                           t(golub[names(vars)[seq_len(ngenes[i])], 
+                                   which(fold!=v)]))
+    
+    fit <- lda(pheno~., data=trainSet)
+    pred <- predict(fit, testSet)
+    
+    er <- sum(pred$class != testSet$pheno)/length(testSet$pheno)
+    return(er)
+  }))
+  
+  looer[i] <- mean(sapply(seq_len(N), function(v) {
+    testSet <- data.frame(pheno=pheno[v],
+                          t(golub[names(vars)[seq_len(ngenes[i])], v]))
+    trainSet <- data.frame(pheno=pheno[-v],
+                           t(golub[names(vars)[seq_len(ngenes[i])], -v]))
+    
+    fit <- lda(pheno~., data=trainSet)
+    pred <- predict(fit, testSet)
+    
+    er <- sum(pred$class != testSet$pheno)/length(testSet$pheno)
+    return(er)
+  }))
+}
+
+loores <- sapply(seq_len(N), function(v) {
+  testSet <- data.frame(W=w[v], Y=y[v])
+  trainSet <- data.frame(W=w[-v], Y=y[-v])
+
+  lmRisk <- sapply(D, function(d) {
+    pred <- predLM(d, trainSet, testSet)
+    risk(pred, testSet)
+  })
+
+  return(lmRisk)
+})
+```
+
+## Solution: compute the CV error for AML vs ALL
+
+```{r golub_cv_plot, echo=FALSE}
+plot(ngenes, er1, type='b', ylab="Misclassification rate", 
+     main="LDA classifier performance", ylim=c(0, max(er2)),
+     xlab="Number of genes", lwd=3)
+lines(ngenes, er2, type='b', col=2, lwd=3)
+lines(ngenes, cver, type='b', col=3, lwd=3)
+lines(ngenes, looer, type='b', col=4, lwd=3)
+legend("topright", c("Training set error", "Test set error", "5-fold", "LOO"), fill=1:4)
+```
+
+## Classification: CV, training and validation
+
+Typically, classification algorithms have _many tuning parameters_ (e.g., number of genes in the previous example).
+
+\bigskip
+The usual procedure is to use cross-validation to _tune the parameters_ (e.g., select the optimal number of genes) and a _genuine validation set_ to compute the final classification performance.
 
 # Clustering
 
@@ -1053,4 +1415,8 @@ print(table(pred_ts$class, phenot))
 - Data 8: Foundations of Data Science: data8.org
 - Karl Broman's tutorials: kbroman.org/pages/tutorials.html
 - R markdown and knitr tutorial: github.com/ijlyttle/user2016_knitr
-- The Element of Statistical Learning (book by Hastie, Tibshirani, Friedman): statweb.stanford.edu/~tibs/ElemStatLearn/
+- The Elements of Statistical Learning (book by Hastie, Tibshirani, Friedman): statweb.stanford.edu/~tibs/ElemStatLearn/
+
+## References
+
+\tiny
