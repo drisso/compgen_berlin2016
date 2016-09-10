@@ -20,7 +20,7 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache=TRUE, error=FALSE, ech
 
 ## Acknowledgements
 
-Many of these slides are based or inspired by the material developed by Sandrine Dudoit for the course "Computational Statistics with Applications in Biology and Medicine" tought at UC Berkeley.
+Many of these slides are based or inspired by the material developed by Sandrine Dudoit for the course "Computational Statistics with Applications in Biology and Medicine" taught at UC Berkeley.
 
 ## About me
 
@@ -135,14 +135,15 @@ biocLite("golubEsets")
 \small
 ```{r data_example}
 library(golubEsets)
+library(magrittr)
 
 data(Golub_Train)
 golub<-exprs(Golub_Train)
 golub[golub<100]<-100
 golub[golub>16000]<-16000
 golub <- log2(golub)
-pheno<-pData(Golub_Train)$ALL.AML
-
+paste(Golub_Train$T.B.cell, Golub_Train$ALL.AML) %>% 
+  sub("NA", "", .) %>% as.factor -> pheno
 head(golub[,1:3])
 ```
 
@@ -304,7 +305,7 @@ boxplot(ZYX, xlab="ZYX", ylab="Expression measure",
 
 ```{r boxplot_pheno}
 boxplot(ZYX~pheno, xlab="ZYX", ylab="Expression measure",
-        col=colors[1:2], main="Boxplot for Zyxin")
+        col=colors, main="Boxplot for Zyxin")
 ```
 
 ## Numerical summaries
@@ -632,7 +633,7 @@ The _scree plot_, i.e., a plot of $\lambda_j$ vs. $j$, can be used to determine 
 
 ```{r pca_golub}
 pca <- prcomp(t(golub))
-plot(pca$x, pch=19, col=colors[pheno])
+plot(pca$x, pch=19, col=colors[pheno], cex=2)
 legend("topleft", levels(pheno), fill=colors)
 ```
 
@@ -1017,7 +1018,7 @@ See [@Ripley96] and [@HTF01].
 
 Many arguments and values; consult help files for details and examples.
 
-## Exercise: A classifier for AML vs ALL
+## Exercise: A classifier for Leukemia samples
 
 \footnotesize
 
@@ -1029,28 +1030,28 @@ data(Golub_Train)
 golub<-exprs(Golub_Train)
 golub[golub<100]<-100
 golub[golub>16000]<-16000
-golub <- log2(golub)
-golub <- normalizeQuantiles(golub)
-pheno<-pData(Golub_Train)$ALL.AML
+log2(golub) %>% normalizeQuantiles -> golub
+paste(Golub_Train$T.B.cell, Golub_Train$ALL.AML) %>% 
+  sub("NA", "", .) %>% as.factor -> pheno
 
 # Test data
 data(Golub_Test)
 golubt<-exprs(Golub_Test)
 golubt[golubt<100]<-100
 golubt[golubt>16000]<-16000
-golubt <- log2(golubt)
-golubt <- normalizeQuantiles(golubt)
-phenot <- pData(Golub_Test)$ALL.AML
+log2(golubt) %>% normalizeQuantiles -> golubt
+paste(Golub_Test$T.B.cell, Golub_Test$ALL.AML) %>% 
+  sub("NA", "", .) %>% as.factor -> phenot
 ```
 
-## Exercise: A classifier for AML vs ALL
+## Exercise: A classifier for Leukemia samples
 
 1. Find/Retrieve the most variable genes.
-2. Use the top 2, 4, ..., 20 genes to classify AML vs ALL samples with LDA.
+2. Use the top 2, 4, ..., 20 genes to classify the leukemia samples with LDA.
 3. Evaluate the performance both in the training and in the test set.
 4. Plot the training and test set error as a function of the number of genes.
 
-## Solution: A classifier for AML vs ALL
+## Solution: A classifier for Leukemia samples
 
 \footnotesize
 
@@ -1073,7 +1074,7 @@ er2[i] <- sum(pred_ts$class != phenot)/length(phenot)
 }
 ```
 
-## Solution: A classifier for AML vs ALL
+## Solution: A classifier for Leukemia samples
 
 \footnotesize
 ```{r lda_plot}
@@ -1318,10 +1319,10 @@ which.min(cvRiskLM)
 which.min(looRiskLM)
 ```
 
-## Exercise: compute the CV error for AML vs ALL
+## Exercise: compute the CV error for the Leukemia dataset
 
 1. Find/Retrieve the most variable genes.
-2. Use the top 2, 4, ..., 20 genes to classify AML vs ALL samples
+2. Use the top 2, 4, ..., 20 genes to classify leukemia samples
 with LDA.
 3. Evaluate the performance using a 5-fold CV and LOO CV procedure on the _training set only_.
 4. Plot the 5-fold CV and LOO CV error as a function of the number
@@ -1329,7 +1330,7 @@ of genes alongside the test-set error rate.
 
 _Comment on the relative advantages of each procedure_
 
-## Solution: compute the CV error for AML vs ALL
+## Solution: compute the CV error for the Leukemia dataset
 
 \tiny
 
@@ -1383,7 +1384,7 @@ loores <- sapply(seq_len(N), function(v) {
 })
 ```
 
-## Solution: compute the CV error for AML vs ALL
+## Solution: compute the CV error for the Leukemia dataset
 
 ```{r golub_cv_plot, echo=FALSE}
 plot(ngenes, er1, type='b', ylab="Misclassification rate", 
@@ -1406,29 +1407,390 @@ The usual procedure is to use cross-validation to _tune the parameters_ (e.g., s
 
 ## Cluster analysis
 
+A common statistical inference problem is to _assign observational units to classes_ on the basis of explanatory variables describing these observations.
+
+\bigskip
+In _cluster analysis_ the _classes are unknown_ a priori and need to be "discovered" or "learned" from a learning set of _unlabeled observations_.
+
+A.k.a. class discovery, unsupervised learning, unsupervised pattern recognition.
+
+## Cluster analysis
+
+_Clustering_ (unsupervised) is in some sense a more difficult
+problem than class prediction (supervised).  Typically, the issues
+that must be addressed for class prediction must also be addressed for
+clustering.  In addition, one encounters the following complexities.
+  
+* The (number of) _classes are unknown a priori_, 
+i.e., there is no learning set of labeled observations.
+* Implicitly, one must have already selected the relevant _observational units/explanatory variables_, _standardization_, and _distance_ measures.
+* Many algorithms that are appealing from an intuitive or theoretical point of view are _computationally complex_. 
+* Often, only approximate solutions are available and reproducibility is an issue.
+
+\bigskip
+The goals can be _vague_: "Find some interesting and important clusters in my data."
+
 ## Distances
+
+Inherent in cluster analysis is a notion of _similarity_ or _distance between observations_. 
+
+\bigskip
+Let $d: \RR^J \times \RR^J \rightarrow \RR^{+}$ denote a _distance function_ for pairs of $J$-dimensional real vectors and
+let $D = (d(X_i,X_j): i,\, j=1,\dotsc,n)$ denote the corresponding $n \times n$ _pairwise distance matrix_ for the $n$ observations to be clustered.
+
+E.g. Euclidean, one-minus-correlation, ...
+
+\bigskip
+R software: `dist` function, `stats` package.
+
+## Distances
+
+Given a distance measure between individual observations, one must
+often also define a measure of _distance between clusters of observations_.  There are a number of ways of measuring the _distance between two clusters_.
+
+* _Single linkage._ The distance between two clusters is the _minimum_ of all pairwise distances between the members of the two clusters.
+* _Average linkage._ The distance between two clusters is the _average_ of all pairwise distances between the members of the two clusters.
+* _Complete linkage._ The distance between two clusters is the _maximum_ of all pairwise distances between the members of the two clusters.
+* _Centroid distance._ The distance between two clusters is the _distance between their centroids_, where the definition of _centroid_ generally depends on the clustering method, e.g., average, median, medoid.
 
 ## Clustering procedures
 
+We distinguish between the following two broad types of clustering procedures.
+
+* _Hierarchical methods_  provide a hierarchy of clusters, from the smallest set, where all observations are in one cluster, through to the largest set, where each observation is in its own cluster.
+* _Partitioning methods_ partition the observations into disjoint clusters and usually require specification of the number of clusters.
+
 ## R software
+
+There are many R and Bioconductor packages dedicated to cluster analysis.
+
+\bigskip
+Here, we will use the functions in the `cluster` package (`pam`) and in the `stats` package (`hclust`, `kmeans`).
+
+\bigskip
+Elizabeth Purdom and I developed a Bioconductor package, `clusterExperiment` specifically designed for clustering (single-cell) RNA-seq data.
 
 ## Partitioning methods
 
-## k-means
+The observations are partitioned into _mutually exclusive and exhaustive clusters_.
 
-## PAM
+\bigskip
+The _number of clusters_ $K$ usually needs to be _prespecified_. 
+
+\bigskip
+Partitioning clustering algorithms often involve _optimizing some criterion/objective function_ by iteratively reallocating observations to clusters, 
+e.g., minimize within-cluster sum-of-squares or sum of distances from nearest medoid.
+
+## Partitioning methods: Examples
+
+* _$k$-means_ and extensions to _fuzzy $k$-means_:  Observations assigned to cluster with the nearest mean, serving as cluster prototype (cf. Gaussian mixtures, principal component analysis).
+* _Partitioning around medoids_ (PAM) [@KaufmanRousseeuw90].
+* _Model-based clustering_, e.g., based on Gaussian mixture models [@FraleyRaftery02] [@McLachlanetal01].
+
+## PAM: Partitioning around medoids
+
+_Partitioning around medoids_ (PAM) of [@KaufmanRousseeuw90] is a partitioning clustering method which operates on an $n \times n$ _distance matrix_, $D = (d(X_i,X_j))$, of pairwise distances between the $n$ observations to be clustered.
+
+\bigskip
+For a _prespecified number of clusters_ $K$, the PAM procedure involves searching for $K$ _medoids_, or representative observations, among the $n$ observations to be clustered.
+
+\bigskip
+Given a set of $K$ medoids, the $K$ _clusters_ are constructed by assigning each observation to the cluster with the nearest medoid.
+
+\bigskip
+PAM can be applied to _any distance_ matrix and can therefore accommodate general data types.
+It tends to be more _robust_ than $k$-means.
+
+## PAM: Partitioning around medoids
+
+The goal is to find a set of $K$ medoids, ${\cal M}_K= \{M_k: k=1,\dotsc,K\} \subseteq \{X_i: i=1,\dotsc,n\}$,  which minimizes the _sum of the distances of each observation to its nearest medoid_.
+
+\bigskip
+Specifically, the _optimal set of medoids_ ${\cal M}_K$ is defined as
+\begin{equation}
+{\cal M}_K \equiv \argmin_{\{{\cal M}: {\cal M} \subseteq \{X_i: i=1,\dotsc,n\}, \, |{\cal M}|=K\}}\ \sum_{i=1}^n \min_{M \in {\cal M}} d(X_i,M).
+\end{equation}
+
+That is, the PAM algorithm seeks to minimize the _objective function_ $f: {\cal M} \rightarrow \RR$ defined by
+\begin{equation}
+f({\cal M}) \equiv  \sum_{i=1}^n \min_{M \in {\cal M}} d(X_i,M),
+\end{equation}
+where ${\cal M}\subseteq \{X_i: i=1,\dotsc,n\}$ and $|{\cal M}|=K$.
+
+## PAM: Partitioning around medoids
+
+For $n$ observations to be partitioned into $K$ clusters, there
+are ${n \choose K} = \frac{n!}{K!(n-K)!}$ possible choices for the
+$K$ medoids.  In practice, it is therefore infeasible to perform an
+exhaustive search over all sets of $K$ medoids.
+
+\bigskip
+The PAM algorithm first seeks a good _initial set of medoids_ (`build` phase).
+It then finds a _local optimum_ for the objective function $f$, that is, a set of medoids such that there is no single switch of an observation with a medoid that decreases the objective function (`swap` phase).
 
 ## Silhouette width
 
+The _silhouette width_ of an observation $i$ is defined as
+\begin{equation}
+sil(i) \equiv \frac{b(i) - a(i)}{\max\{a(i),b(i)\}} \in [-1,1],
+\end{equation}
+where
+$a(i)$ denotes the average distance between the $i$th observation and all
+other observations in the cluster to which $i$ belongs and
+$b(i)$ denotes the minimum average distance between the $i$th observation and observations in other clusters.
+
+\bigskip
+@Rousseeuw87 suggests using _silhouette plots_ to:
+(i) _select the number of clusters_ $K$;
+(ii) _assess how well individual observations are clustered_.
+
+\bigskip
+Intuitively, the _larger the silhouette widths_, the _better the clustering_.
+
+## Exercise: Cluster the leukemia dataset with PAM
+
+1. Select a suitable number of principal components (hint: `screeplot`).
+2. Apply PAM with `k=2` and `k=3` in the space of the selected principal components using 1 - correlation distance (hint: `cor`, `as.dist`).
+3. Compare the inferred clusters with the known classification (AML, B-cell ALL, T-cell ALL).
+4. Use the average silhouette width to select the "optimal" $k$ (hint: `silinfo` component of `pam` output).
+
+## Solution: Cluster the leukemia dataset with PAM
+
+\tiny
+
+```{r sel_p}
+pca <- prcomp(t(golub))
+
+plot(pca$sdev^2/sum(pca$sdev^2)*100, xlab="Number of PCs", ylab="Percent of variance explained", type='b', main="Percent of variance explained", lwd=3)
+
+p <- 5
+```
+
+## Solution: Cluster the leukemia dataset with PAM
+
+\tiny
+
+```{r pam2, eval=FALSE}
+library(cluster)
+r <- cor(t(pca$x[,1:p]))
+dd <- 1 - r
+dimnames(dd) <- list(as.character(pheno),as.character(pheno))
+d <- as.dist(dd)
+
+# PAM, K=2
+pam2 <- pam(d, k=2)
+
+# PAM, K=3
+pam3 <- pam(d, k=3)
+
+table(pam2$clustering, pheno)
+table(pam3$clustering, pheno)
+
+# Graphical summaries
+clusplot(dd, pam3$clustering, labels=3, col.p=1,
+         col.txt=colors[pheno], main="Bivariate cluster plot")
+
+plot(pam2, which.plots = 2, main="Average silhouette width")
+plot(pam3, which.plots = 2, main="Average silhouette width")
+
+# Select best k
+K <- 2:10
+avgSil <- rep(NA, length(K))
+names(avgSil) <- K
+for(k in K) {
+  avgSil[k-1] <- pam(d, k=k)$silinfo$avg.width
+}
+
+# Graphical summaries
+barplot(avgSil, names.arg=K, xlab="Number of clusters, K", ylab="Average silhouette width")
+plot(K, avgSil, pch=16, cex=2, xlab="Number of clusters, K", ylab="Average silhouette width")
+
+table(pam(d, k=which.max(avgSil)+1)$clustering, pheno)
+```
+
 ## Hierarchical clustering
+
+Hierarchical clustering methods produce a _hierarchy_ or _tree_ of _nested clusters_.
+
+\bigskip
+Unlike partitioning methods, they _do not require a prespecified number of clusters_ $K$.
+
+\bigskip
+_Partitions into clusters_ can be obtained by _"cutting" the tree into "branches"_,  by specifying either a desired number of clusters or cut height.
+
+\bigskip
+We distinguish between
+
+- _agglomerative_, i.e., bottom-up, hierarchical clustering;
+- _divisive_, i.e., top-down, hierarchical clustering.
+
+## Hierarchical clustering: Agglomerative
+
+Start with each observation in its own cluster, i.e., $K=n$ clusters.
+
+\bigskip
+At each step, _merge the two nearest clusters_ using a measure of _between-cluster distance_.
+
+\bigskip
+R software: `hclust` function, `stats` package.
+
+- _Advantages_: computational simplicity.
+- _Disadvantages_: cannot correct for early errors.
+
+## Hierarchical clustering: Divisive
+
+Start with all observations in the same cluster, i.e., $K=1$ cluster.
+
+\bigskip
+At each step, _split clusters_ into two (or more) clusters.
+
+\bigskip
+Example: DIvisive ANAlysis (DIANA), `diana` R function in package `cluster`.
+
+- _Advantages_: capture the main structure of the data.
+- _Disadvantages_: cannot correct for early errors.
 
 ## Dendrograms
 
+_Dendrograms_ are often used to visualize the nested sequence of
+clusters resulting from hierarchical clustering.
+
+\bigskip
+While dendrograms are appealing because of their apparent ease of interpretation, they _can be misleading_.
+
+\bigskip
+Firstly, the dendrogram corresponding to a given hierarchical clustering
+is _not unique_.
+For each merge/split, one needs to specify which subtree or branch should go on the left and which on the right.
+
+For example, in agglomerative hierarchical clustering, there are $2^{(n-1)}$ possible dendrograms.
+
+The default in the R function `hclust` is to order the subtrees so that the tighter cluster is on the left.
+
+## Dendrograms
+
+A second and perhaps less recognized shortcoming of dendrograms is
+that they  _impose structure_ on the data, instead of revealing structure in these data.
+
+\bigskip
+A dendrogram is a valid graphical representation of data only to the extent that the pairwise distances between observations possess the hierarchical structure imposed by the clustering procedure.
+
+## Exercise: Cluster the leukemia dataset with `hclust`
+
+1. Use the same distance computed for the PAM analysis.
+2. Apply `hclust` with an appropriate agglomeration distance.
+3. Visualize the results with a dendrogram (hint: `plot`)
+4. Cut the tree to obtain three clusters (hint: `cutree`)
+5. Compare the inferred clusters with the known classification (AML, B-cell ALL, T-cell ALL).
+
+## Solution: Cluster the leukemia dataset with `hclust`
+
+\tiny
+
+```{r hclust, eval=FALSE}
+hc <- hclust(d, method="average")
+
+table(cutree(hc, 3), pheno)
+
+plot(hc, main="Hierarchical clustering dendrogram", sub="Average linkage agglomeration, one-minus-correlation distance")
+rect.hclust(hc, k=3, border=colors)
+```
+
+## Resampling-based and Ensemble clustering
+
+As with classification, many clustering algorithms have been proposed in the statistical literature.
+
+\bigskip
+Some general features that improve the _robustness_ and _stability_ of the clustering procedures are:
+
+- _Resampling-based clustering_ 
+- _Sequential clustering_
+- _Ensemble / consensus clustering_
+
+These ideas may also help in selecting the number of clusters.
+
 ## Resampling-based clustering
+
+Given an underlying clustering strategy, e.g., $k$-means or PAM with a particular choice of $k$, we can:
+
+1. Subsample the data, e.g. 70% of samples.
+2. Find clusters on the subsample.
+3. Create a co-clustering matrix D: 
+    - % of subsamples where samples were in the same cluster.
+
+Note that Step 3. is itself a clustering step, and hierarchical clustering may be used.
+
+## Sequential clustering
+
+Initially proposed by @tseng2005tight to cluster genes in microarray data.
+
+\bigskip
+Given an underlying clustering strategy, e.g., $k$-means or PAM, we can:
+
+1. Range over $k$ (optionally using the subsampling strategy).
+2. The cluster that remains stable across values of $k$ is identified and removed.
+3. Repeat until no more stable clusters are found.
 
 ## Ensemble clustering
 
-## Bioconductor: clusterExperiment
+A.k.a. _consensus clustering_. Given an underlying clustering strategy, e.g., $k$-means or PAM, we can 
+
+1. Run the algorithm _varying the tuning parameters_ (e.g., number of variables $p$ or number of clusters $k$).
+2. Collect the results from multiple clustering algorithms.
+3. Compute a consensus by, e.g., majority vote.
+
+As often happens in statistics, _averaging_ leads to more prediction power.
+
+## Example: Resampling
+
+\tiny
+
+```{r resampling}
+library(clusterExperiment)
+
+cl <- clusterSingle(golub[names(vars)[1:500],], 
+                    subsample = TRUE, sequential = FALSE, 
+                    clusterFunction = c("hierarchical01"), 
+                    clusterDArgs = list(minSize=5, alpha=0.3), 
+                    subsampleArgs = list("k"=3,"clusterFunction"="pam"),
+                    dimReduce = c("PCA"), ndims=10)
+```
+
+## Example: Resampling
+
+\tiny
+
+```{r resampling2}
+colData(cl) <- DataFrame(pheno=pheno)
+plotCoClustering(cl, sampleData="pheno")
+```
+
+## Example: Sequential
+
+\tiny
+
+```{r sequential}
+cl2 <- clusterSingle(golub[names(vars)[1:500],],
+                    subsample = TRUE, sequential = TRUE, 
+                    clusterFunction = c("hierarchical01"), 
+                    clusterDArgs = list(minSize=5, alpha=0.3),
+                    subsampleArgs = list("clusterFunction"="pam"),
+                    seqArgs = list(k0=5, remain.n=10, top.can=5),
+                    dimReduce = c("PCA"), ndims=10)
+cl2
+```
+
+## Example: Ensemble
+
+\tiny
+
+```{r clusterExperiment}
+clusterMany(cl,
+            dimReduce="PCA",  nPCADims=c(2, 3, 5), 
+            ks = 3, clusterFunction = "pam") %>%
+  combineMany %>%
+  plotClusters(sampleData="pheno")
+```
 
 # Reproducible research
 
