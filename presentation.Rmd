@@ -114,7 +114,7 @@ Many views...
 ## What is statistics?
 
 - \emph{Descriptive statistics:} Summarize the data to highlight *trends* and discover _hidden patterns_.
-- \emph{Inference:} make conclusions about a _population_ based on information contained in a _sample_.
+- \emph{Inference:} Make conclusions about a _population_ based on information contained in a _sample_.
 
 ## An example dataset: ALL/AML microarray data
 
@@ -186,7 +186,7 @@ and for _displaying and reporting the results_ of a statistical analysis.
 
 ## Summarizing the data
 
-How can we get a sense of the values of the gene "IGF2" in this dataset?
+How can we get a sense of the values of the gene Zyxin ("ZYX") in this dataset?
 
 \tiny
 ```{r summary}
@@ -763,7 +763,7 @@ Simulate a learning set ${\cal L}_n = \{(X_i,Y_i): i=1,\dotsc,n
   $J=2$ covariates.
 
 \bigskip
-The following figures compare the _partitions_ produced by different classifiers based on the learning set ${\cal L}_n$: _linear discriminant analysis_ (LDA), _quadratic discriminant analysis_ (QDA), _na\"ive Bayes_, _$k$-nearest-neighbor_ ($k$-NN), with $k=1,3,5$.
+The following figures compare the _partitions_ produced by different classifiers based on the learning set ${\cal L}_n$: _linear discriminant analysis_ (LDA), _quadratic discriminant analysis_ (QDA), _naive Bayes_, _$k$-nearest-neighbor_ ($k$-NN), with $k=1,3,5$.
 
 ## Example of classifier partitions
 
@@ -944,7 +944,7 @@ P(Y=k|X) = \frac{P(Y=k) \, P(X|Y=k)}{\sum_{i=1}^K P(Y=i) \, P(X|Y=i)}
 $$
 
 \bigskip
-The _classification rule_ is to assign assign the observation to the population with the greatest posterior probability.
+The _classification rule_ is to assign the observation to the population with the greatest posterior probability.
 
 \bigskip
 If we assume that the joint distribution of X is a multivariate normal, this gives rise to _Linear Discriminant Analysis_ (LDA) and _Quadratic Discriminant Analysis_ (QDA).
@@ -1004,11 +1004,11 @@ LDA and QDA are
 ## Extensions
 
 - _Flexible discriminant analysis_ (FDA). LDA on transformed outcomes and/or covariates.
-_ _Penalized discriminant analysis_ (PDA). A penalized Mahalanobis distance is used to enforce smoothness.
+- _Penalized discriminant analysis_ (PDA). A penalized Mahalanobis distance is used to enforce smoothness.
 - _Mixture discriminant analysis_ (MDA). Class conditional densities are modeled as mixtures of Gaussian densities.
 - _Automatic variable selection_. Shrinkage methods can be applied to perform automatic variable selection.
 
-See [@Ripley96] and [@HTF01].
+See @Ripley96 and @HTF01.
 
 ## R software
 
@@ -1489,7 +1489,7 @@ e.g., minimize within-cluster sum-of-squares or sum of distances from nearest me
 
 ## PAM: Partitioning around medoids
 
-_Partitioning around medoids_ (PAM) of [@KaufmanRousseeuw90] is a partitioning clustering method which operates on an $n \times n$ _distance matrix_, $D = (d(X_i,X_j))$, of pairwise distances between the $n$ observations to be clustered.
+_Partitioning around medoids_ (PAM) of @KaufmanRousseeuw90 is a partitioning clustering method which operates on an $n \times n$ _distance matrix_, $D = (d(X_i,X_j))$, of pairwise distances between the $n$ observations to be clustered.
 
 \bigskip
 For a _prespecified number of clusters_ $K$, the PAM procedure involves searching for $K$ _medoids_, or representative observations, among the $n$ observations to be clustered.
