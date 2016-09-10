@@ -470,9 +470,9 @@ par(mfrow=c(1, 1))
 x <- rnorm(500)
 y <- -x^2 + rnorm(500,0.,0.5)
 plot(x,y,main=paste("Cor[x,y] = ", round(cor(x,y),2), sep=""))
-abline(lm(y~x)[[1]],col=2,lwd=2)
-lines(lowess(y ~ x,f=0.2),col=3,lwd=2)
-legend("bottom",c("Ordinary linear regression","Lowess regression"),col=2:3,lwd=2)
+abline(lm(y~x)[[1]],col=2,lwd=3)
+lines(lowess(y ~ x,f=0.2),col=3,lwd=3)
+legend("bottom",c("Ordinary linear regression","Lowess regression"),col=2:3,lwd=3)
 ```
 
 ## Exercise: Displaying high-dimensional data
@@ -507,8 +507,6 @@ boxplot(t(golub5), las=2, ylab="Expression levels")
 cors <- cor(t(golub5))
 heatmap(cors, col=clusterExperiment::seqPal3)
 ```
-
-# Random variables and probability distributions
 
 # Dimensionality reduction
 
@@ -552,9 +550,9 @@ xynorm <- scale(xy, scale = FALSE, center = TRUE)
 e <- eigen(cov(xynorm))
 
 plot(xynorm)
-lines(xynorm[,1], e$vectors[2,1]/e$vectors[1,1] * xynorm[,1], col=2, lwd=2)
-lines(xynorm[,1], e$vectors[2,2]/e$vectors[1,2] * xynorm[,1], col=4, lwd=2)
-legend("topleft", c("PC1", "PC2"), lty=1, col=c(2, 4), lwd=2)
+lines(xynorm[,1], e$vectors[2,1]/e$vectors[1,1] * xynorm[,1], col=2, lwd=3)
+lines(xynorm[,1], e$vectors[2,2]/e$vectors[1,2] * xynorm[,1], col=4, lwd=3)
+legend("topleft", c("PC1", "PC2"), lty=1, col=c(2, 4), lwd=3)
 ```
 
 ## Principal Component Analysis
@@ -641,7 +639,7 @@ legend("topleft", levels(pheno), fill=colors)
 ## Example
 
 ```{r pca_golub2, echo=FALSE}
-plot(pca$sdev^2/sum(pca$sdev^2)*100, xlab="Number of PCs", ylab="Percent of variance explained", type='b', main="Percent of variance explained")
+plot(pca$sdev^2/sum(pca$sdev^2)*100, xlab="Number of PCs", ylab="Percent of variance explained", type='b', main="Percent of variance explained", lwd=3)
 ```
 
 # Classification
@@ -701,7 +699,7 @@ abline(0, -1, lwd=3, lty=2)
 ```{r toy3, echo=FALSE}
 plot(x, pch=19, col=colors[y], xlab=expression(X[1]), ylab=expression(X[2]), cex=2, main="New observation")
 abline(0, -1, lwd=3, lty=2)
-points(0, 2, pch=1, cex=2.2, lwd=2)
+points(0, 2, pch=1, cex=2.2, lwd=3)
 ```
 
 ## Toy example
@@ -711,7 +709,7 @@ points(0, 2, pch=1, cex=2.2, lwd=2)
 ```{r toy4, echo=FALSE}
 plot(x, pch=19, col=colors[y], xlab=expression(X[1]), ylab=expression(X[2]), cex=2, main="Prediction")
 abline(0, -1, lwd=3, lty=2)
-points(0, 2, pch=1, cex=2.5, lwd=2)
+points(0, 2, pch=1, cex=2.5, lwd=3)
 points(0, 2, pch=19, cex=2, col=colors[1])
 ```
 
@@ -932,8 +930,8 @@ ercv <- sapply(1:10, function(i) {
   sum(pred1 != y)/length(y)
 })
 
-plot(1:10, er1, type='b', ylim=c(0, .2), xlab="k", ylab="Misclassification rate", main="k-NN classifier performance")
-lines(1:10, er2, type='b', col=2)
+plot(1:10, er1, type='b', ylim=c(0, .2), xlab="k", ylab="Misclassification rate", main="k-NN classifier performance", lwd=3)
+lines(1:10, er2, type='b', col=2, lwd=3)
 legend("topright", c("Training set error", "Test set error"), fill=1:2)
 ```
 
@@ -1406,7 +1404,31 @@ The usual procedure is to use cross-validation to _tune the parameters_ (e.g., s
 
 # Clustering
 
-# Hypothesis testing
+## Cluster analysis
+
+## Distances
+
+## Clustering procedures
+
+## R software
+
+## Partitioning methods
+
+## k-means
+
+## PAM
+
+## Silhouette width
+
+## Hierarchical clustering
+
+## Dendrograms
+
+## Resampling-based clustering
+
+## Ensemble clustering
+
+## Bioconductor: clusterExperiment
 
 # Reproducible research
 
