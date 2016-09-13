@@ -28,6 +28,14 @@ Many of these slides are based or inspired by the material developed by Sandrine
 - My research focuses on the development of statistical methods and software to address problems in biomedical and genomic applications.
 - I am author and maintainer of four R/Bioconductor packages
 
+## About me
+
+- 2002–2005: BSc in Mathematics, University of Genoa, Italy.
+- 2005–2008: MSc in Statistics and Informatics, University of
+Padova, Italy. Advisor: Chiara Romualdi.
+- 2009–2012: PhD in Statistics, University of Padova, Italy. Advisor: Monica Chiogna.
+- 2012–: Postdoc, Department of Statistics and Division of Biostatistics, University of California, Berkeley. Advisor: Terry Speed and Sandrine Dudoit.
+
 ## Why statistics?
 
 \begin{quote}
@@ -116,6 +124,14 @@ Many views...
 - \emph{Descriptive statistics:} Summarize the data to highlight *trends* and discover _hidden patterns_.
 - \emph{Inference:} Make conclusions about a _population_ based on information contained in a _sample_.
 
+## Preliminaries: install useful packages
+
+```{r packages, eval=FALSE}
+install.packages(c("magrittr", "RColorBrewer", 
+                   "matrixStats", 
+                   "Rtsne", "e1071"))
+```
+
 ## An example dataset: ALL/AML microarray data
 
 Study of gene expression in two types of acute leukemias, acute lymphoblastic leukemia (ALL) and acute myeloid leukemia (AML) [@golub1999molecular].
@@ -148,6 +164,11 @@ head(golub[,1:3])
 ```
 
 # Numerical and graphical summaries
+
+## Numerical and graphical summaries
+
+\centering
+\includegraphics[width=\linewidth]{figures/pie_chart}
 
 ## Definitions: Data and variables
 
@@ -513,6 +534,13 @@ heatmap(cors, col=clusterExperiment::seqPal3)
 
 ## Dimensionality reduction
 
+\centering
+\includegraphics[width=.8\linewidth]{figures/fuck_grapefruit}
+
+\source{http://xkcd.com/242/}
+
+## Dimensionality reduction
+
 _Data_ consist of _variables recorded on observational units_.
 
 \bigskip
@@ -643,7 +671,70 @@ legend("topleft", levels(pheno), fill=colors)
 plot(pca$sdev^2/sum(pca$sdev^2)*100, xlab="Number of PCs", ylab="Percent of variance explained", type='b', main="Percent of variance explained", lwd=3)
 ```
 
+## t-distributed stochastic neighbor embedding (t-SNE)
+
+t-SNE is a non-linear dimensionality reduction technique proposed by @maaten2008visualizing.
+
+\bigskip
+The t-SNE algorithm comprises the following steps:
+
+1. Compute the pairwise Euclidean distance between points in the high-dimensional space.
+2. Transform the distance matrix into a similarity matrix using a _varying Gaussian kernel_.
+    - The similarity between $X_j$ and $X_i$ is the joint probability that $X_i$ will choose $X_j$ as its neighbor (and vice versa).
+3. Map the points into a _random low-dimensional space_.
+4. Compute similarities in the low-dimensional space using a _t-distribution kernel_.
+5. Use _gradient descent_ to minimize the Kullback-Leibler divergence between the high-dimensional and low-dimensional distributions.
+
+## t-distributed stochastic neighbor embedding (t-SNE)
+
+More formally, the similarity between $X_j$ and $X_i$ is defined as
+$$
+p_{ij} = \frac{p_{i|j} + p_{j|i}}{2n},
+$$
+where
+$$
+p_{j|i} = \frac{\exp(-||X_i-X_j ||^2/ 2\sigma_i ^2  )}{\sum_{k \neq i} \exp(-||X_i-X_k ||^2/ 2\sigma_i ^2 ) }.
+$$
+
+In low dimensional space,
+$$
+q_{ij} = \frac{(1+||Y_i - Y_j||^2)^{-1}}{\sum_{k \neq i} (1+||Y_i - Y_k||^2)^{-1}}.
+$$
+
+The final optimization is
+$$
+min_{Y_1, \ldots, Y_n} \sum_i \sum_j p_{ij} \log \frac{p_{ij}}{q_{ij}}.
+$$
+
+## t-distributed stochastic neighbor embedding (t-SNE)
+
+t-SNE has become extremely popular for the _visualization of single-cell RNA-seq data_.
+
+\bigskip
+However, one should keep in mind that _only local patterns are meaningful_ and large distances should not be given too much interpretation.
+
+## Example
+
+```{r tsne_golub}
+library(Rtsne)
+set.seed(223)
+tsne <- Rtsne(t(golub), perplexity = 5)
+```
+
+## Example
+
+```{r tsne_golub2}
+plot(tsne$Y, pch=19, col=colors[pheno], cex=2, 
+     xlab="Dimension 1", ylab="Dimension 2")
+legend("bottomright", levels(pheno), fill=colors)
+```
+
 # Classification
+
+## Classification
+
+\centering
+\includegraphics[width=.8\linewidth]{figures/classification}
 
 ## Class prediction
 
@@ -1120,6 +1211,11 @@ Examples include
 
 # Cross-validation
 
+## Cross-validation
+
+\centering
+\includegraphics[width=.8\linewidth]{figures/cross-val}
+
 ## Cross-validation (CV)
 
 To assess the performance, one cannot use the same observations for both training and testing the classifier.
@@ -1404,6 +1500,11 @@ Typically, classification algorithms have _many tuning parameters_ (e.g., number
 The usual procedure is to use cross-validation to _tune the parameters_ (e.g., select the optimal number of genes) and a _genuine validation set_ to compute the final classification performance.
 
 # Clustering
+
+## Clustering
+
+\centering
+\includegraphics[width=.7\linewidth]{figures/clustering}
 
 ## Cluster analysis
 
@@ -1794,12 +1895,62 @@ clusterMany(cl,
 
 # Reproducible research
 
-## Additional resources
+## Reproducible research
+
+\centering
+\includegraphics[width=.35\linewidth]{figures/reproducible}
+
+\source{http://xkcd.com/242/}
+
+## Reproducible research
+
+\centering
+\includegraphics[width=.7\linewidth]{figures/reproducible2}
+
+\source{Sidney Harris}
+
+## Why should I bother?
+
+If you ever asked one of these questions...
+
+\centering
+\large
+
+\bigskip
+_In what order do I run these scripts?_
+
+\bigskip
+_Where did I get these data?_
+
+\bigskip
+_Why did I filter out these genes?_
+
+\bigskip
+_How did I make that figure?_
+
+\source{Karl Broman}
+
+## Karl Broman's "steps toward reproducible research"
+
+1. Organize your data and code
+2. Everything with a script
+3. Automate the process (GNU make)
+4. Turn scripts into reproducible reports
+5. Turn repeated code into functions
+6. Create a package/module
+7. Use version control (git/GitHub)
+8. License your software
+
+\bigskip
+http://kbroman.org/steps2rr/
+
+## Additional (free!) resources
 
 - Data 8: Foundations of Data Science: data8.org
 - Karl Broman's tutorials: kbroman.org/pages/tutorials.html
 - R markdown and knitr tutorial: github.com/ijlyttle/user2016_knitr
 - The Elements of Statistical Learning (book by Hastie, Tibshirani, Friedman): statweb.stanford.edu/~tibs/ElemStatLearn/
+- http://simplystatistics.org
 
 ## References
 
